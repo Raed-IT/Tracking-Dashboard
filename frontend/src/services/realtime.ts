@@ -1,0 +1,4 @@
+"use client";
+import Echo from "laravel-echo";import Pusher from "pusher-js";import type {Track} from "@/types/tracking";import {useTrackingStore} from "@/stores/tracking-store";
+declare global{interface Window{Pusher:typeof Pusher}}
+export function connectTracking():()=>void{window.Pusher=Pusher;const echo=new Echo({broadcaster:"reverb",key:process.env.NEXT_PUBLIC_REVERB_APP_KEY??"fusion-local-key",wsHost:process.env.NEXT_PUBLIC_WS_HOST??window.location.hostname,wsPort:Number(process.env.NEXT_PUBLIC_WS_PORT??80),wssPort:Number(process.env.NEXT_PUBLIC_WS_PORT??443),forceTLS:window.location.protocol==="https:",enabledTransports:["ws","wss"]});echo.channel("tracks").listen(".track.updated",(event:{track:Track})=>useTrackingStore.getState().upsert(event.track));return()=>{echo.leave("tracks");echo.disconnect()}}

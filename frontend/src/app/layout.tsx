@@ -1,0 +1,1 @@
+import "./globals.css";export const metadata={title:"Fusion Operations Center",description:"Multi-source tracking and operations"};export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}

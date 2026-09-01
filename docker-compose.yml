@@ -1,0 +1,339 @@
+# name: fusion-ops
+# services:
+#   nginx:
+#     image: nginx:1.29-alpine
+#     ports: ["8088:80"]
+#     volumes: ["./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro","./backend/public:/var/www/public:ro"]
+#     depends_on: [api, nextjs]
+#   api: &api
+#     build: {context: ., dockerfile: docker/php/Dockerfile}
+#     env_file: .env
+#     volumes: ["./backend:/var/www"]
+#     depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
+#   worker:
+#     <<: *api
+#     command: php artisan horizon
+#   scheduler:
+#     <<: *api
+#     command: php artisan schedule:work
+#   reverb:
+#     <<: *api
+#     command: php artisan reverb:start --host=0.0.0.0 --port=8080
+#   nextjs:
+#     build: {context: ./frontend, dockerfile: Dockerfile}
+#     env_file: .env
+#     volumes: ["./frontend:/app","frontend_modules:/app/node_modules"]
+#   postgres:
+#     image: postgis/postgis:17-3.5-alpine
+#     environment: {POSTGRES_DB: "${DB_DATABASE:-fusion_ops}", POSTGRES_USER: "${DB_USERNAME:-fusion}", POSTGRES_PASSWORD: "${DB_PASSWORD:-fusion_dev}"}
+#     volumes: ["postgres_data:/var/lib/postgresql/data"]
+#     healthcheck: {test: ["CMD-SHELL","pg_isready -U ${DB_USERNAME:-fusion} -d ${DB_DATABASE:-fusion_ops}"], interval: 5s, timeout: 5s, retries: 20}
+#   redis:
+#     image: redis:8-alpine
+#     command: redis-server --appendonly yes
+#     volumes: ["redis_data:/data"]
+#     healthcheck: {test: ["CMD","redis-cli","ping"], interval: 5s, timeout: 3s, retries: 20}
+#   minio:
+#     image: minio/minio:latest
+#     command: server /data --console-address :9001
+#     environment: {MINIO_ROOT_USER: "${AWS_ACCESS_KEY_ID:-minio}", MINIO_ROOT_PASSWORD: "${AWS_SECRET_ACCESS_KEY:-miniosecret}"}
+#     ports: ["9001:9001"]
+#     volumes: ["minio_data:/data"]
+# volumes: {postgres_data: {}, redis_data: {}, minio_data: {}, frontend_modules: {}}
+services:
+
+  # ============================================================
+  # Laravel / PHP-FPM
+  # ============================================================
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tracking_app
+    restart: unless-stopped
+    working_dir: /var/www
+
+    volumes:
+      - ./backend:/var/www
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    networks:
+      - tracking
+
+
+  # ============================================================
+  # Nginx
+  # ============================================================
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: tracking_nginx
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./backend:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+    depends_on:
+      - app
+      - frontend
+
+    networks:
+      - tracking
+
+
+  # ============================================================
+  # Next.js
+  # ============================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    container_name: tracking_frontend
+    restart: unless-stopped
+
+    working_dir: /app
+
+    environment:
+      NODE_ENV: development
+
+      NEXT_PUBLIC_API_URL: http://localhost/api/v1
+
+      NEXT_PUBLIC_REVERB_APP_KEY: tracking-key
+      NEXT_PUBLIC_REVERB_HOST: localhost
+      NEXT_PUBLIC_REVERB_PORT: 9090
+      NEXT_PUBLIC_REVERB_SCHEME: http
+
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+
+    ports:
+      - "3000:3000"
+
+    networks:
+      - tracking
+
+
+  # ============================================================
+  # MySQL
+  # ============================================================
+  mysql:
+    image: mysql:8.4
+    container_name: tracking_mysql
+    restart: unless-stopped
+
+    environment:
+      MYSQL_DATABASE: tracking
+      MYSQL_USER: tracking
+      MYSQL_PASSWORD: tracking_password
+      MYSQL_ROOT_PASSWORD: root_password
+
+    ports:
+      - "3307:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+    networks:
+      - tracking
+
+
+  # ============================================================
+  # Redis
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: tracking_redis
+    restart: unless-stopped
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+    networks:
+      - tracking
+
+
+  # ============================================================
+  # Laravel Horizon
+  # ============================================================
+  horizon:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: tracking_horizon
+    restart: unless-stopped
+
+    working_dir: /var/www
+
+    command:
+      - php
+      - artisan
+      - horizon
+
+    volumes:
+      - ./backend:/var/www
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    networks:
+      - tracking
+
+
+  # ============================================================
+  # Laravel Scheduler
+  # ============================================================
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: tracking_scheduler
+    restart: unless-stopped
+
+    working_dir: /var/www
+
+    command:
+      - php
+      - artisan
+      - schedule:work
+
+    volumes:
+      - ./backend:/var/www
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    networks:
+      - tracking
+
+
+  # ============================================================
+  # Laravel Reverb
+  # ============================================================
+  reverb:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: tracking_reverb
+    restart: unless-stopped
+
+    working_dir: /var/www
+
+    command:
+      - php
+      - artisan
+      - reverb:start
+      - --host=0.0.0.0
+      - --port=8080
+
+    volumes:
+      - ./backend:/var/www
+
+    ports:
+      - "9090:8080"
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    networks:
+      - tracking
+
+
+  # ============================================================
+  # MinIO
+  # ============================================================
+  minio:
+    image: minio/minio:latest
+    container_name: tracking_minio
+    restart: unless-stopped
+
+    command:
+      - server
+      - /data
+      - --console-address
+      - ":9001"
+
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+
+    volumes:
+      - minio_data:/data
+
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+    networks:
+      - tracking
+
+
+# ============================================================
+# Networks
+# ============================================================
+
+networks:
+  tracking:
+    driver: bridge
+
+
+# ============================================================
+# Persistent volumes
+# ============================================================
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
+  frontend_node_modules:
+  frontend_next:
