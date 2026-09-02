@@ -11,11 +11,17 @@ export function connectTracking(): () => void {
         window.location.hostname;
 
     const port = Number(
-        process.env.NEXT_PUBLIC_REVERB_PORT ?? 9090
+        process.env.NEXT_PUBLIC_REVERB_PORT ?? 8080
     );
 
     const scheme =
         process.env.NEXT_PUBLIC_REVERB_SCHEME ?? "http";
+
+    console.log("Connecting to Reverb:", {
+        host,
+        port,
+        scheme,
+    });
 
     const echo = new Echo({
         broadcaster: "reverb",
@@ -37,16 +43,23 @@ export function connectTracking(): () => void {
                 : ["ws"],
     });
 
-    echo
-        .channel("tracks")
-        .listen(
-            ".track.updated",
-            (event: { track: Track }) => {
-                useTrackingStore
-                    .getState()
-                    .upsert(event.track);
-            }
-        );
+    const tracksChannel = echo.channel("tracks");
+
+    const pusherChannel =
+        (tracksChannel as any).subscription;
+
+    // PRINT EVERY EVENT
+    pusherChannel.bind_global(
+        (eventName: string, data: unknown) => {
+            console.log(
+                "🔥 EVENT:",
+                eventName,
+                data
+            );
+        }
+    );
+
+    
 
     return () => {
         echo.leave("tracks");

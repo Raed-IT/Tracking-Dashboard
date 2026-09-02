@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $organization = Organization::firstOrCreate(['slug' => 'operations'], ['name' => 'Operations Center']);
-        $user = User::firstOrCreate(['email' => 'admin@example.com'], ['name' => 'Operations Administrator', 'password' => Hash::make('change-me')]);
+        $user = User::firstOrCreate(['email' => 'superadmin@test.com'], ['name' => 'Operations Administrator', 'password' => Hash::make('123456')]);
         $organization->users()->syncWithoutDetaching([$user->id => ['role' => 'administrator']]);
         DataSource::firstOrCreate(['slug' => 'mock-aircraft'], ['organization_id' => $organization->id, 'name' => 'Mock Aircraft Stream', 'type' => 'aircraft', 'driver' => 'mock_aircraft', 'enabled' => true, 'status' => 'online', 'health_metadata' => ['mode' => 'simulation']]);
         DataSource::firstOrCreate(['slug' => 'flightradar24'], ['organization_id' => $organization->id, 'name' => 'Flightradar24', 'type' => 'aircraft', 'driver' => 'flightradar24', 'enabled' => false, 'status' => 'offline', 'health_metadata' => ['reason' => 'FR24_API_KEY is not configured']]);
