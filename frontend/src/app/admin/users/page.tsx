@@ -1,0 +1,3 @@
+"use client";
+import {AuthGate} from "@/components/auth/AuthGate";import {PermissionGate} from "@/components/auth/PermissionGate";import {OperationsDrawer} from "@/components/navigation/OperationsDrawer";import {UserManager} from "@/components/admin/UserManager";import Link from "next/link";
+export default function UsersPage(){return <AuthGate><OperationsDrawer><PermissionGate permission="users.manage" fallback={<main className="forbidden"><h1>Access denied</h1><p>Administrator permission is required.</p><Link href="/">Return to operations</Link></main>}><UserManager/></PermissionGate></OperationsDrawer></AuthGate>}

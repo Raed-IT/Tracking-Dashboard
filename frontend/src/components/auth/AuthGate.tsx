@@ -1,0 +1,3 @@
+"use client";
+import {useEffect} from "react";import {useRouter} from "next/navigation";import {useAuthStore} from "@/stores/auth-store";
+export function AuthGate({children}:{children:React.ReactNode}){const router=useRouter(),user=useAuthStore(s=>s.user),initialized=useAuthStore(s=>s.initialized),initialize=useAuthStore(s=>s.initialize);useEffect(()=>{void initialize()},[initialize]);useEffect(()=>{if(initialized&&!user)router.replace("/login")},[initialized,user,router]);if(!initialized||!user)return <main className="auth-loading"><span className="auth-spinner"/>Validating secure session…</main>;return <>{children}</>}

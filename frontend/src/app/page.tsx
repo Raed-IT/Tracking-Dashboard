@@ -1,2 +1,2 @@
-import {OperationsMap} from "@/components/map/OperationsMap";import {LeftPanel,RightPanel} from "@/components/dashboard/Panels";
-export default function Home(){return <main><header><span className="brand">FUSION<span>OPS</span></span><nav>OPERATIONS CENTER <i/> LIVE</nav><time>UTC // SYSTEM NOMINAL</time></header><section className="workspace"><LeftPanel/><OperationsMap/><RightPanel/></section><footer><span>TRACKS <b>LIVE</b></span><span>INGESTION <b>NOMINAL</b></span><span>WEBSOCKET <b>CONNECTED</b></span></footer></main>}
+import {DashboardShell} from "@/components/dashboard/DashboardShell";
+export default function Home(){return <DashboardShell/>}

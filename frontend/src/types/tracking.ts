@@ -1,3 +1,5 @@
 export type TrackType="aircraft"|"drone"|"vehicle"|"vessel"|"person/device"|"radar target"|"RF target"|"unknown";
 export interface Track {id:string;type:TrackType;classification:string|null;callsign:string|null;registration:string|null;latitude:number;longitude:number;altitude:number|null;speed:number|null;heading:number|null;vertical_rate:number|null;confidence:number;first_seen_at:string;last_seen_at:string;status:string;source_ids:number[];metadata:Record<string,unknown>}
 export interface DataSource {id:string;name:string;status:"online"|"offline"|"degraded";latency_ms:number|null;last_message_at:string|null;messages_per_minute:number;error_count:number}
+export type AlertSeverity="info"|"low"|"medium"|"high"|"critical";
+export interface OperatorAlert{id:string;severity:AlertSeverity;state:"active"|"acknowledged"|"resolved";title:string;message:string|null;track:{id:string;callsign:string|null;type:string}|null;acknowledged_at:string|null;acknowledged_by:{id:string;name:string}|null;created_at:string}

@@ -13,7 +13,9 @@ final class TrackController extends Controller
 {
     public function index(TrackIndexRequest $r)
     {
-        $q = Track::query()->where('last_seen_at', '>=', now()->subMinutes(10));
+        $q = Track::query()
+            ->where('organization_id', $r->user()->currentOrganizationId())
+            ->where('last_seen_at', '>=', now()->subMinutes(10));
         if ($r->bbox) {
             [$minLng,$minLat,$maxLng,$maxLat] = array_map('floatval', explode(',', $r->bbox));
             $q->whereBetween('longitude', [$minLng, $maxLng])->whereBetween('latitude', [$minLat, $maxLat]);
@@ -34,11 +36,15 @@ return TrackResource::collection($q->orderByDesc('last_seen_at')->paginate($r->i
 
     public function show(Track $track): TrackResource
     {
+        abort_unless($track->organization_id === request()->user()->currentOrganizationId(), 404);
+
         return new TrackResource($track);
     }
 
     public function history(Track $track)
     {
+        abort_unless($track->organization_id === request()->user()->currentOrganizationId(), 404);
+
         return response()->json(['data' => $track->observations()->orderBy('observed_at')->whereBetween('observed_at', [request('from', now()->subDay()), request('to', now())])->limit(10000)->get(['uuid', 'observed_at', 'latitude', 'longitude', 'altitude', 'speed', 'heading', 'source_id'])]);
     }
 }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a247df4d82a4f7f4867a353cf0d7b726",
+    "content-hash": "d80535f833f7ad357408a20deda05fba",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -7312,6 +7312,73 @@
                 }
             ],
             "time": "2026-08-30T20:10:52+00:00"
+        },
+        {
+            "name": "techies-africa/laravel-reverb-ui",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Techies-Africa/laravel-reverb-ui.git",
+                "reference": "db0b6cf5ea3e2a9535e102f6581ff86c7f38a2eb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Techies-Africa/laravel-reverb-ui/zipball/db0b6cf5ea3e2a9535e102f6581ff86c7f38a2eb",
+                "reference": "db0b6cf5ea3e2a9535e102f6581ff86c7f38a2eb",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^11.0|^12.0",
+                "laravel/reverb": "^1.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^9.0",
+                "phpunit/phpunit": "^10.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "TechiesAfrica\\ReverbUI\\ReverbUIServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "TechiesAfrica\\ReverbUI\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Confidence Ugolo",
+                    "homepage": "https://www.linkedin.com/in/confidence-ugolo/"
+                },
+                {
+                    "name": "Techies Africa",
+                    "email": "hello@techies.africa"
+                }
+            ],
+            "description": "A premium real-time telemetry dashboard for Laravel Reverb.",
+            "homepage": "https://github.com/Techies-Africa/laravel-reverb-ui",
+            "keywords": [
+                "WebSockets",
+                "dashboard",
+                "laravel",
+                "real-time",
+                "reverb",
+                "techies-africa",
+                "telemetry"
+            ],
+            "support": {
+                "issues": "https://github.com/Techies-Africa/laravel-reverb-ui/issues",
+                "source": "https://github.com/Techies-Africa/laravel-reverb-ui/tree/v1.0.0"
+            },
+            "time": "2026-01-26T12:38:32+00:00"
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",
