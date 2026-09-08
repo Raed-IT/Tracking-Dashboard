@@ -109,7 +109,7 @@ const [fullscreen, setFullscreen] = useState(false);
               : "h-[min(70vh,680px)] min-h-[520px]",
           ].join(" ")}
         >
-          <div className="map-overlay-card absolute left-4 top-4 z-20 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80">
+          {/* <div className="map-overlay-card absolute left-4 top-4 z-20 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80">
             <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[.2em] text-cyan-600 dark:text-cyan-300">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
               {t.dashboard.liveTheater}
@@ -120,7 +120,7 @@ const [fullscreen, setFullscreen] = useState(false);
             <div className="mt-1 text-[10px] text-slate-500 dark:text-slate-500">
               {t.dashboard.telemetry} · {dashboard.metrics.tracks.toLocaleString()} {t.dashboard.targets}
             </div>
-          </div>
+          </div> */}
 
           <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
             <button
