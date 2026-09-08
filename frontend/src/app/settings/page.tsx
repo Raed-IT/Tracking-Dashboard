@@ -1,3 +1,15 @@
 "use client";
-import {AuthGate} from "@/components/auth/AuthGate";import {OperationsDrawer} from "@/components/navigation/OperationsDrawer";import {Building2,Database,Radio,UserRound} from "lucide-react";import {useAuthStore} from "@/stores/auth-store";
-export default function SettingsPage(){const user=useAuthStore(s=>s.user);return <AuthGate><OperationsDrawer><main className="management-page"><div className="management-heading"><span>PLATFORM CONFIGURATION</span><h1>Settings</h1><p>Organization, identity, and service configuration.</p></div><section className="settings-grid"><article><Building2/><div><small>ORGANIZATION</small><strong>{user?.organization?.name}</strong><p>Workspace slug: {user?.organization?.slug}</p></div></article><article><UserRound/><div><small>SIGNED IN AS</small><strong>{user?.name}</strong><p>{user?.email} · {user?.role}</p></div></article><article><Database/><div><small>PRIMARY STORAGE</small><strong>MySQL 8.4</strong><p>Durable operational history</p></div><i className="status-dot"/></article><article><Radio/><div><small>LIVE SERVICES</small><strong>Redis + Reverb</strong><p>Queue and realtime transport</p></div><i className="status-dot"/></article></section></main></OperationsDrawer></AuthGate>}
+import {AuthGate} from "@/components/auth/AuthGate";
+import {OperationsDrawer} from "@/components/navigation/OperationsDrawer";
+import {Building2,Database,Radio,UserRound,type LucideIcon} from "lucide-react";
+import {useAuthStore} from "@/stores/auth-store";
+export default function SettingsPage(){
+ const user=useAuthStore(s=>s.user);
+ const cards:{icon:LucideIcon;label:string;title:string;detail:string}[]=[
+  {icon:Building2,label:"ORGANIZATION",title:user?.organization?.name??"—",detail:`Workspace slug: ${user?.organization?.slug??"—"}`},
+  {icon:UserRound,label:"SIGNED IN AS",title:user?.name??"—",detail:user?.email??"—"},
+  {icon:Database,label:"PRIMARY STORAGE",title:"MySQL 8.4",detail:"Durable operational history"},
+  {icon:Radio,label:"LIVE SERVICES",title:"Redis + Reverb",detail:"Queue and realtime transport"}
+ ];
+ return <AuthGate><OperationsDrawer><main className="mx-auto max-w-[1200px] p-4 sm:p-6 xl:p-8"><div className="mb-8"><span className="text-[10px] font-bold uppercase tracking-[.2em] text-cyan-300">PLATFORM CONFIGURATION</span><h1 className="mt-2 text-3xl font-semibold text-white">Settings</h1><p className="mt-2 text-sm text-slate-500">Organization, identity and service configuration.</p></div><section className="grid gap-3 sm:grid-cols-2">{cards.map(({icon:Icon,label,title,detail})=><article key={label} className="relative rounded-2xl border border-white/[.07] bg-slate-900/70 p-5"><Icon size={19} className="text-cyan-300"/><div className="mt-5 text-[10px] font-bold tracking-[.16em] text-slate-600">{label}</div><strong className="mt-1 block text-lg text-white">{title}</strong><p className="mt-1 text-xs text-slate-500">{detail}</p><i className="absolute right-5 top-5 h-2 w-2 rounded-full bg-emerald-300 shadow-lg shadow-emerald-300/30"/></article>)}</section></main></OperationsDrawer></AuthGate>
+}
