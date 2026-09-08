@@ -11,11 +11,11 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Laravel\Sanctum\HasApiTokens;
-
-class User extends Authenticatable
+ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasUuids, Notifiable;
+      
 
     /**
      * The attributes that are mass assignable.
@@ -28,7 +28,7 @@ class User extends Authenticatable
         'email',
         'password',
     ];
-
+ 
     public function uniqueIds(): array
     {
         return ['uuid'];

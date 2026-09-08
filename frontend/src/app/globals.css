@@ -25,6 +25,28 @@ body {
   color: rgb(241 245 249);
 }
 
+html[dir="rtl"] .operations-sidebar {
+  left: auto;
+  right: 0;
+}
+
+@media (max-width: 1023px) {
+  html[dir="rtl"] .operations-sidebar.-translate-x-full {
+    transform: translateX(100%);
+  }
+}
+
+@media (min-width: 1024px) {
+  html[dir="rtl"] .operations-main {
+    padding-left: 0;
+    padding-right: 260px;
+  }
+
+  html[dir="rtl"] .operations-main[data-collapsed="true"] {
+    padding-right: 78px;
+  }
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: rgb(100 116 139 / .35) transparent;

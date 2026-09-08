@@ -136,7 +136,7 @@ export function OperationsDrawer({
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-cyan-300 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-950 selection:bg-cyan-300 selection:text-slate-950 dark:bg-slate-950 dark:text-slate-100">
       {/* Mobile overlay */}
       {mobile && (
         <button
@@ -150,9 +150,8 @@ export function OperationsDrawer({
       {/* Sidebar */}
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 flex flex-col",
-          "border-r border-white/[.07]",
-          "bg-slate-950/95 backdrop-blur-xl",
+          "operations-sidebar fixed inset-y-0 left-0 z-50 flex flex-col",
+          "border-r border-slate-200 bg-white/95 dark:border-white/[.07] dark:bg-slate-950/95 backdrop-blur-xl",
           "transition-all duration-300",
           "w-[260px]",
           collapsed ? "lg:w-[78px]" : "",
@@ -160,7 +159,7 @@ export function OperationsDrawer({
         ].join(" ")}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center gap-3 border-b border-white/[.06] px-4">
+        <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-4 dark:border-white/[.06]">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-cyan-300/20 bg-cyan-300/10 text-cyan-300">
             <RadioTower size={18} />
           </div>
@@ -171,7 +170,7 @@ export function OperationsDrawer({
                 FUSION<span className="text-cyan-300">OPS</span>
               </div>
 
-              <div className="text-[9px] uppercase tracking-[.2em] text-slate-600">
+              <div className="text-[9px] uppercase tracking-[.2em] text-slate-500 dark:text-slate-600">
                 Air operations
               </div>
             </div>
@@ -180,7 +179,7 @@ export function OperationsDrawer({
           {/* Desktop collapse */}
           <button
             type="button"
-            className="ml-auto hidden rounded-lg p-2 text-slate-500 transition hover:bg-white/5 hover:text-white lg:block"
+            className="ml-auto hidden rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-white/5 dark:hover:text-white lg:block"
             onClick={() => setCollapsed((value) => !value)}
             aria-label={
               collapsed ? "Expand sidebar" : "Collapse sidebar"
@@ -195,7 +194,7 @@ export function OperationsDrawer({
           {/* Mobile close */}
           <button
             type="button"
-            className="ml-auto rounded-lg p-2 text-slate-500 transition hover:bg-white/5 hover:text-white lg:hidden"
+            className="ml-auto rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-white/5 dark:hover:text-white lg:hidden"
             onClick={() => setMobile(false)}
             aria-label="Close navigation"
           >
@@ -205,18 +204,18 @@ export function OperationsDrawer({
 
         {/* Workspace */}
         {!collapsed && (
-          <div className="mx-3 mt-4 rounded-xl border border-white/[.06] bg-white/[.025] p-3">
+          <div className="mx-3 mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[.06] dark:bg-white/[.025]">
             <div className="text-[9px] font-bold uppercase tracking-[.18em] text-slate-600">
-              Workspace
+              {t.common.workspace}
             </div>
 
-            <div className="mt-1 truncate text-sm font-medium text-slate-200">
+            <div className="mt-1 truncate text-sm font-medium text-slate-800 dark:text-slate-200">
               {user?.organization?.name ?? "Operations"}
             </div>
 
             <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-300">
               <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
-              Secure session
+              {t.common.secureSession}
             </div>
           </div>
         )}
@@ -236,8 +235,8 @@ export function OperationsDrawer({
                   "group flex items-center gap-3 rounded-xl px-3 py-2.5",
                   "text-sm transition-all duration-200",
                   active
-                    ? "bg-cyan-300/10 text-cyan-200 shadow-inner shadow-cyan-300/5"
-                    : "text-slate-400 hover:bg-white/[.04] hover:text-white",
+                    ? "bg-cyan-300/10 text-cyan-700 shadow-inner shadow-cyan-300/5 dark:text-cyan-200"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[.04] dark:hover:text-white",
                 ].join(" ")}
               >
                 <Icon
@@ -245,7 +244,7 @@ export function OperationsDrawer({
                   className={
                     active
                       ? "text-cyan-300"
-                      : "text-slate-500 group-hover:text-slate-300"
+                      : "text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300"
                   }
                 />
 
@@ -264,7 +263,7 @@ export function OperationsDrawer({
         </nav>
 
         {/* User */}
-        <div className="border-t border-white/[.06] p-3">
+        <div className="border-t border-slate-200 p-3 dark:border-white/[.06]">
           {!collapsed && (
             <div className="mb-2 flex items-center gap-3 rounded-xl p-2">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-500 text-xs font-bold text-slate-950">
@@ -272,7 +271,7 @@ export function OperationsDrawer({
               </span>
 
               <div className="min-w-0">
-                <div className="truncate text-xs font-medium text-slate-200">
+                <div className="truncate text-xs font-medium text-slate-800 dark:text-slate-200">
                   {user?.name ?? "Operator"}
                 </div>
 
@@ -292,20 +291,21 @@ export function OperationsDrawer({
               "hover:bg-rose-400/5 hover:text-rose-300",
             ].join(" ")}
           >
-            {collapsed ? "↗" : "Sign out"}
+            {collapsed ? "↗" : t.common.signOut}
           </button>
         </div>
       </aside>
 
       {/* Main */}
       <div
+        data-collapsed={collapsed}
         className={[
-          "min-h-screen transition-[padding] duration-300",
+          "operations-main min-h-screen transition-[padding] duration-300",
           collapsed ? "lg:pl-[78px]" : "lg:pl-[260px]",
         ].join(" ")}
       >
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/[.06] bg-slate-950/80 px-4 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 backdrop-blur-xl dark:border-white/[.06] dark:bg-slate-950/80 sm:px-6">
           {/* Mobile menu */}
           <Button
             size="icon"
@@ -321,15 +321,15 @@ export function OperationsDrawer({
           <button
             type="button"
             onClick={() => setPalette(true)}
-            className="flex h-10 min-w-0 max-w-xl flex-1 items-center gap-2 rounded-xl border border-white/[.07] bg-white/[.025] px-3 text-left text-xs text-slate-600 transition hover:border-white/15 hover:text-slate-400"
+            className="flex h-10 min-w-0 max-w-xl flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-left text-xs text-slate-500 transition hover:border-slate-300 hover:text-slate-700 dark:border-white/[.07] dark:bg-white/[.025] dark:text-slate-600 dark:hover:border-white/15 dark:hover:text-slate-400"
           >
             <Search size={15} />
 
             <span className="truncate">
-              Search tracks, alerts, sources…
+              {t.common.search}
             </span>
 
-            <kbd className="ml-auto hidden rounded-md border border-white/10 px-1.5 py-0.5 text-[9px] text-slate-600 sm:block">
+            <kbd className="ml-auto hidden rounded-md border border-slate-200 px-1.5 py-0.5 text-[9px] text-slate-500 dark:border-white/10 dark:text-slate-600 sm:block">
               ⌘ K
             </kbd>
           </button>
@@ -351,7 +351,7 @@ export function OperationsDrawer({
               variant="ghost"
               onClick={toggleTheme}
               aria-label="Toggle theme"
-              title={theme === "dark" ? "Light mode" : "Dark mode"}
+              title={theme === "dark" ? t.common.lightMode : t.common.darkMode}
             >
               {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
             </Button>
@@ -366,7 +366,7 @@ export function OperationsDrawer({
 
             <span className="ml-1 hidden items-center gap-1.5 rounded-full border border-emerald-400/15 bg-emerald-400/5 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-300 sm:flex">
               <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-              Live
+              {t.common.live}
             </span>
           </div>
         </header>
@@ -385,9 +385,9 @@ export function OperationsDrawer({
             }
           }}
         >
-          <section className="w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+          <section className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-white/10 dark:bg-slate-900">
             {/* Search input */}
-            <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
+            <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-4 dark:border-white/10">
               <Command
                 size={17}
                 className="shrink-0 text-cyan-300"
@@ -395,14 +395,14 @@ export function OperationsDrawer({
 
               <input
                 autoFocus
-                className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
-                placeholder="Jump to a workspace…"
+                className="flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-600"
+                placeholder={t.common.search}
               />
 
               <button
                 type="button"
                 onClick={() => setPalette(false)}
-                className="rounded-lg p-1 transition hover:bg-white/5"
+                className="rounded-lg p-1 transition hover:bg-slate-100 dark:hover:bg-white/5"
                 aria-label="Close command palette"
               >
                 <X size={16} className="text-slate-500" />
@@ -416,7 +416,7 @@ export function OperationsDrawer({
                   key={href}
                   href={href}
                   onClick={() => setPalette(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                 >
                   <Icon size={16} className="text-slate-500" />
 
@@ -434,4 +434,3 @@ export function OperationsDrawer({
     </div>
   );
 }
-

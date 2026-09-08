@@ -35,33 +35,33 @@ const [fullscreen, setFullscreen] = useState(false);
 
   const stats = [
     {
-      label: "Active tracks",
+      label: t.dashboard.activeTracks,
       value: dashboard.metrics.tracks,
-      detail: "aircraft in monitored airspace",
+      detail: t.dashboard.activeTracksDetail,
       icon: RadioTower,
       accent: "text-cyan-500 dark:text-cyan-300",
       bg: "bg-cyan-500/10 dark:bg-cyan-300/10",
     },
     {
-      label: "Data sources",
+      label: t.dashboard.dataSources,
       value: dashboard.sources.length,
-      detail: `${dashboard.metrics.sources} reporting now`,
+      detail: `${dashboard.metrics.sources} ${t.dashboard.dataSourcesDetail}`,
       icon: Wifi,
       accent: "text-emerald-600 dark:text-emerald-300",
       bg: "bg-emerald-500/10 dark:bg-emerald-300/10",
     },
     {
-      label: "Active alerts",
+      label: t.dashboard.activeAlerts,
       value: dashboard.metrics.alerts,
-      detail: "requiring operator review",
+      detail: t.dashboard.activeAlertsDetail,
       icon: ShieldAlert,
       accent: "text-amber-600 dark:text-amber-300",
       bg: "bg-amber-500/10 dark:bg-amber-300/10",
     },
     {
-      label: "Telemetry / min",
+      label: t.dashboard.telemetry,
       value: Math.round(telemetry),
-      detail: "messages across all feeds",
+      detail: t.dashboard.telemetryDetail,
       icon: Database,
       accent: "text-violet-600 dark:text-violet-300",
       bg: "bg-violet-500/10 dark:bg-violet-300/10",
@@ -112,13 +112,13 @@ const [fullscreen, setFullscreen] = useState(false);
           <div className="map-overlay-card absolute left-4 top-4 z-20 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80">
             <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[.2em] text-cyan-600 dark:text-cyan-300">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-              Live theater
+              {t.dashboard.liveTheater}
             </div>
             <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-              Global airspace
+              {t.dashboard.globalAirspace}
             </div>
             <div className="mt-1 text-[10px] text-slate-500 dark:text-slate-500">
-              Streaming telemetry · {dashboard.metrics.tracks.toLocaleString()} targets
+              {t.dashboard.telemetry} · {dashboard.metrics.tracks.toLocaleString()} {t.dashboard.targets}
             </div>
           </div>
 
@@ -126,8 +126,8 @@ const [fullscreen, setFullscreen] = useState(false);
             <button
               type="button"
               className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white/90 text-slate-600 shadow-lg backdrop-blur-xl transition hover:text-slate-950 dark:border-white/10 dark:bg-slate-950/80 dark:text-slate-400 dark:hover:text-white"
-              aria-label="Map layers"
-              title="Map layers"
+              aria-label={t.dashboard.fullscreen}
+              title={t.dashboard.fullscreen}
             >
               <Layers3 size={16} />
             </button>
@@ -136,8 +136,8 @@ const [fullscreen, setFullscreen] = useState(false);
               type="button"
               onClick={() => setFullscreen((value) => !value)}
               className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white/90 text-slate-600 shadow-lg backdrop-blur-xl transition hover:text-slate-950 dark:border-white/10 dark:bg-slate-950/80 dark:text-slate-400 dark:hover:text-white"
-              aria-label={fullscreen ? "{t.dashboard.exitFullScreen} map" : "Open fullscreen map"}
-              title={fullscreen ? "{t.dashboard.exitFullScreen}" : "{t.dashboard.fullscreen}"}
+              aria-label={fullscreen ? t.dashboard.exitFullScreen : t.dashboard.fullscreen}
+              title={fullscreen ? t.dashboard.exitFullScreen : t.dashboard.fullscreen}
             >
               {fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             </button>
@@ -151,7 +151,7 @@ const [fullscreen, setFullscreen] = useState(false);
                 type="button"
                 onClick={() => setFullscreen((value) => !value)}
                 className="ml-2 rounded-lg p-1 hover:bg-slate-200 dark:hover:bg-white/10"
-                aria-label="Close fullscreen map"
+                aria-label={t.dashboard.exitFullScreen}
               >
                 <X size={13} />
               </button>
@@ -168,17 +168,17 @@ const [fullscreen, setFullscreen] = useState(false);
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-white/[.06]">
               <div>
                 <div className="text-[9px] font-bold uppercase tracking-[.18em] text-amber-500 dark:text-amber-300">
-                  Priority queue
+                  {t.dashboard.priorityQueue}
                 </div>
                 <h2 className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                  Active incidents
+                  {t.dashboard.activeIncidents}
                 </h2>
               </div>
               <Link
                 href="/alerts"
                 className="text-[11px] text-cyan-600 hover:text-cyan-500 dark:text-cyan-300 dark:hover:text-cyan-200"
               >
-                View all
+                {t.dashboard.viewAll}
               </Link>
             </div>
 
@@ -195,14 +195,14 @@ const [fullscreen, setFullscreen] = useState(false);
                     <StatusBadge status={alert.severity} />
                   </div>
                   <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
-                    {alert.message ?? "No additional context available."}
+                    {alert.message ?? t.dashboard.unlinkedTarget}
                   </p>
                   <div className="mt-3 text-[10px] text-slate-400 dark:text-slate-600">
                     {new Date(alert.created_at).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}{" "}
-                    · {alert.track?.callsign ?? "Unlinked target"}
+                    · {alert.track?.callsign ?? t.dashboard.unlinkedTarget}
                   </div>
                 </article>
               ))}
@@ -222,28 +222,28 @@ const [fullscreen, setFullscreen] = useState(false);
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[.07] dark:bg-slate-900/70">
             <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
               <Activity size={14} className="text-emerald-500" />
-              System status
+              {t.dashboard.systemStatus}
             </div>
             <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-              All primary feeds operational
+              {t.dashboard.feedsOperational}
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[.07] dark:bg-slate-900/70">
             <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
               <Bell size={14} className="text-amber-500" />
-              Alert monitoring
+              {t.dashboard.alertMonitoring}
             </div>
             <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-              {dashboard.metrics.alerts.toLocaleString()} active events
+              {dashboard.metrics.alerts.toLocaleString()} {t.dashboard.activeEvents}
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[.07] dark:bg-slate-900/70">
             <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
               <Database size={14} className="text-violet-500" />
-              Data throughput
+              {t.dashboard.dataThroughput}
             </div>
             <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-              {Math.round(telemetry).toLocaleString()} msg/min
+              {Math.round(telemetry).toLocaleString()} {t.dashboard.telemetry}
             </div>
           </div>
         </section>

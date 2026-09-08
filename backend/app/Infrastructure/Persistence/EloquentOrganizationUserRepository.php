@@ -33,18 +33,52 @@ final class EloquentOrganizationUserRepository implements OrganizationUserReposi
         });
     }
 
-    public function update(Organization $organization, User $user, array $attributes): User
-    {
-        DB::transaction(function () use ($organization, $user, $attributes): void {
-            $user->update(array_filter(['name' => $attributes['name'] ?? null, 'email' => $attributes['email'] ?? null, 'password' => $attributes['password'] ?? null], fn (mixed $value) => $value !== null));
-            if (isset($attributes['role'])) {
-                $organization->users()->updateExistingPivot($user->id, ['role' => $attributes['role']]);
+ public function update(
+    Organization $organization,
+    User $user,
+    array $attributes
+): User {
+    return DB::transaction(function () use ($organization, $user, $attributes): User {
+
+        // تأكد أن المستخدم عضو فعلاً في المنظمة
+        $member = $organization->users()
+            ->whereKey($user->id)
+            ->firstOrFail();
+
+        $userData = [];
+
+        if (array_key_exists('name', $attributes)) {
+            $userData['name'] = $attributes['name'];
+        }
+
+        if (array_key_exists('email', $attributes)) {
+            $userData['email'] = $attributes['email'];
+        }
+
+        if (!empty($attributes['password'])) {
+            $userData['password'] = bcrypt($attributes['password']);
+        }
+
+        if ($userData !== []) {
+            $member->update($userData);
+        }
+
+        if (array_key_exists('role', $attributes)) {
+            $role = $attributes['role'];
+
+            if ($role instanceof OrganizationRole) {
+                $role = $role->value;
             }
-        });
 
-        return $this->findMember($organization, $user->fresh());
-    }
+            $organization->users()->updateExistingPivot(
+                $member->id,
+                ['role' => $role]
+            );
+        }
 
+        return $member->fresh();
+    });
+}
     public function remove(Organization $organization, User $user): void
     {
         DB::transaction(function () use ($organization, $user): void {

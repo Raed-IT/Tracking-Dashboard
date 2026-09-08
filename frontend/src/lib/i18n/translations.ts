@@ -78,6 +78,12 @@ export const translations = {
       adjustSearch: "Try adjusting your search.",
       noRecords: "Records will appear here when available.",
     },
+    operations: {
+      liveTracking: "OPERATIONS / LIVE TRACKING", tracksDescription: "Search, sort and inspect active aircraft tracks across all connected sources.", realtime: "Realtime", track: "Track", type: "Type", position: "Position", altitude: "Altitude", speed: "Speed", heading: "Heading", confidence: "Confidence", status: "Status", lastSeen: "Last seen", trackDetails: "Track details", unidentifiedTrack: "Unidentified track", searchTracks: "Search callsign, registration, position…",
+      incidents: "OPERATIONS / INCIDENTS", alertsDescription: "Triage active detections and maintain a clear operational response queue.", severity: "Severity", alert: "Alert", target: "Target", source: "Source", created: "Created", alertDetails: "Alert details", noContext: "No context", noLinkedTrack: "No linked track", unlinked: "Unlinked", assignedTo: "Assigned to", unassigned: "Unassigned", acknowledge: "Acknowledge alert", acknowledging: "Acknowledging…", noAdditionalContext: "No additional alert context was provided.", searchIncidents: "Search incidents…",
+      observability: "PLATFORM / OBSERVABILITY", healthDescription: "A concise view of the infrastructure supporting live operations.", platformHealth: "Platform health", degraded: "Degraded", onlineSources: "Online sources", liveProviders: "Live ingestion providers", serviceChecks: "Service checks",
+      ingestion: "OPERATIONS / INGESTION", sourcesDescription: "Monitor provider connectivity, latency and telemetry throughput.", addSource: "Add source", sourceDetails: "Source details", searchProviders: "Search providers…",
+    },
   },
 
   ar: {
@@ -156,6 +162,12 @@ export const translations = {
       retry: "إعادة المحاولة",
       adjustSearch: "جرّب تعديل البحث.",
       noRecords: "ستظهر السجلات هنا عند توفرها.",
+    },
+    operations: {
+      liveTracking: "العمليات / التتبع المباشر", tracksDescription: "ابحث ورتب وافحص مسارات الطائرات النشطة عبر جميع المصادر المتصلة.", realtime: "لحظي", track: "المسار", type: "النوع", position: "الموقع", altitude: "الارتفاع", speed: "السرعة", heading: "الاتجاه", confidence: "الثقة", status: "الحالة", lastSeen: "آخر ظهور", trackDetails: "تفاصيل المسار", unidentifiedTrack: "مسار غير معرّف", searchTracks: "ابحث عن النداء أو التسجيل أو الموقع…",
+      incidents: "العمليات / الحوادث", alertsDescription: "فرز الاكتشافات النشطة والمحافظة على قائمة استجابة تشغيلية واضحة.", severity: "الخطورة", alert: "التنبيه", target: "الهدف", source: "المصدر", created: "تاريخ الإنشاء", alertDetails: "تفاصيل التنبيه", noContext: "لا يوجد سياق", noLinkedTrack: "لا يوجد مسار مرتبط", unlinked: "غير مرتبط", assignedTo: "مُسند إلى", unassigned: "غير مُسند", acknowledge: "إقرار بالتنبيه", acknowledging: "جارٍ الإقرار…", noAdditionalContext: "لا يتوفر سياق إضافي لهذا التنبيه.", searchIncidents: "ابحث في الحوادث…",
+      observability: "المنصة / المراقبة", healthDescription: "عرض موجز للبنية التحتية التي تدعم العمليات الحية.", platformHealth: "صحة المنصة", degraded: "متدهور", onlineSources: "المصادر المتصلة", liveProviders: "مزودو الإدخال المباشر", serviceChecks: "فحوصات الخدمة",
+      ingestion: "العمليات / الاستيعاب", sourcesDescription: "راقب اتصال المزودين وزمن الاستجابة وتدفق البيانات.", addSource: "إضافة مصدر", sourceDetails: "تفاصيل المصدر", searchProviders: "ابحث عن المزودين…",
     },
   },
 } as const;
