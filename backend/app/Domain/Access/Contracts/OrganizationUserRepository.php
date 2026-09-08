@@ -10,7 +10,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface OrganizationUserRepository
 {
-    public function paginate(Organization $organization, int $perPage = 50): LengthAwarePaginator;
+    public function paginate(Organization $organization, int $perPage = 25, ?string $search = null, ?string $role = null): LengthAwarePaginator;
 
     public function findMember(Organization $organization, User $user): User;
 

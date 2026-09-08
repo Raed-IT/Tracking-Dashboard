@@ -31,6 +31,24 @@ final class OrganizationUserManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'night@test.local']);
     }
 
+    public function test_users_can_be_paginated_and_filtered_by_search_and_role(): void
+    {
+        [$administrator, $organization] = $this->member('administrator', 'admin@test.local');
+        $operator = User::factory()->create(['name' => 'Night Operator', 'email' => 'night@test.local']);
+        $organization->users()->attach($operator, ['role' => 'operator']);
+        Sanctum::actingAs($administrator);
+
+        $this->getJson('/api/v1/organization/users?per_page=1&page=2')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonPath('meta.current_page', 2);
+
+        $this->getJson('/api/v1/organization/users?search=night&role=operator')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.email', 'night@test.local');
+    }
+
     public function test_viewer_cannot_manage_users(): void
     {
         [$viewer] = $this->member('viewer', 'viewer@test.local');

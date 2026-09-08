@@ -9,7 +9,7 @@ export async function updateSource(id:string,input:{enabled:boolean}):Promise<Da
 export async function login(email:string,password:string):Promise<{token:string;user:AuthenticatedUser}>{const {data}=await api.post<{token:string;user:AuthenticatedUser}>("/auth/login",{email,password});return data}
 export async function logout():Promise<void>{await api.post("/auth/logout")}
 export async function fetchAuthenticatedUser():Promise<AuthenticatedUser>{const {data}=await api.get<{data:AuthenticatedUser}>("/auth/user");return data.data}
-export async function fetchOrganizationUsers():Promise<OrganizationUser[]>{const {data}=await api.get<{data:OrganizationUser[]}>("/organization/users");return data.data}
+export async function fetchOrganizationUsers(filters:{search?:string;role?:Role;page?:number;perPage?:number}={}):Promise<OrganizationUser[]>{const {data}=await api.get<{data:OrganizationUser[]}>("/organization/users",{params:{search:filters.search,role:filters.role,page:filters.page,per_page:filters.perPage??100}});return data.data}
 export async function createOrganizationUser(input:{name:string;email:string;password:string;role:Role}):Promise<OrganizationUser>{const {data}=await api.post<{data:OrganizationUser}>("/organization/users",input);return data.data}
 export async function updateOrganizationUser(id:string,input:{name:string;email:string;password?:string;role:Role}):Promise<OrganizationUser>{const {data}=await api.put<{data:OrganizationUser}>(`/organization/users/${id}`,input);return data.data}
 export async function deleteOrganizationUser(id:string):Promise<void>{await api.delete(`/organization/users/${id}`)}

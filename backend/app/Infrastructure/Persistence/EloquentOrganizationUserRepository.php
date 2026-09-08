@@ -13,9 +13,16 @@ use Illuminate\Support\Facades\DB;
 
 final class EloquentOrganizationUserRepository implements OrganizationUserRepository
 {
-    public function paginate(Organization $organization, int $perPage = 50): LengthAwarePaginator
+    public function paginate(Organization $organization, int $perPage = 25, ?string $search = null, ?string $role = null): LengthAwarePaginator
     {
-        return $organization->users()->orderBy('name')->paginate($perPage);
+        return $organization->users()
+            ->when($search, fn ($query) => $query->where(fn ($members) => $members
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")))
+            ->when($role, fn ($query) => $query->wherePivot('role', $role))
+            ->orderBy('name')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     public function findMember(Organization $organization, User $user): User

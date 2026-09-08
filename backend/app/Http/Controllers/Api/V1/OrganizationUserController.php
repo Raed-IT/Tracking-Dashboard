@@ -20,7 +20,19 @@ final class OrganizationUserController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        return OrganizationUserResource::collection($this->users->paginate(request()->user()->organizations->firstOrFail()));
+        $request = request();
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'role' => ['nullable', 'in:administrator,supervisor,operator,viewer'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        return OrganizationUserResource::collection($this->users->paginate(
+            $request->user()->organizations->firstOrFail(),
+            (int) $validated['per_page'] ?? 10,
+            $validated['search'] ?? null,
+            $validated['role'] ?? null,
+        ));
     }
 
     public function store(StoreOrganizationUserRequest $request): JsonResponse

@@ -13,7 +13,7 @@ type Draft={name:string;email:string;password:string;role:Role};const empty:Draf
 
 export function UserManager(){
  const current=useAuthStore(s=>s.user);const[users,setUsers]=useState<OrganizationUser[]>([]),[draft,setDraft]=useState<Draft>(empty),[editing,setEditing]=useState<OrganizationUser|null>(null),[open,setOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState("");
- const load=useCallback(async()=>{try{setUsers(await fetchOrganizationUsers())}catch{setError("Unable to load organization users.")}},[]);
+ const load=useCallback(async()=>{try{setUsers(await fetchOrganizationUsers({perPage:100}))}catch{setError("Unable to load organization users.")}},[]);
  useEffect(()=>{void load()},[load]);
  const showCreate=()=>{setEditing(null);setDraft(empty);setError("");setOpen(true)},showEdit=(u:OrganizationUser)=>{setEditing(u);setDraft({name:u.name,email:u.email,password:"",role:u.role});setError("");setOpen(true)};
  const submit=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError("");try{if(editing)await updateOrganizationUser(editing.id,{name:draft.name,email:draft.email,role:draft.role,...(draft.password?{password:draft.password}:{})});else await createOrganizationUser(draft);setOpen(false);await load()}catch{setError("Could not save this user. Check the fields and try again.")}finally{setBusy(false)}};
