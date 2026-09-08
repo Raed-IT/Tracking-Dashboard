@@ -24,6 +24,10 @@ Route::prefix('v1')->group(function () {
             Route::get('sources/{source}', [SourceController::class, 'show']);
             Route::get('sources/{source}/health', [SourceController::class, 'health']);
         });
+        Route::middleware('permission:sources.manage')->group(function () {
+            Route::post('sources', [SourceController::class, 'store']);
+            Route::patch('sources/{source}', [SourceController::class, 'update']);
+        });
         Route::middleware('permission:users.manage')->apiResource('organization/users', OrganizationUserController::class)->except('show');
         Route::middleware('permission:alerts.view')->get('alerts', [AlertController::class, 'index']);
         Route::middleware('permission:alerts.manage')->post('alerts/{alert}/acknowledge', [AlertController::class, 'acknowledge']);

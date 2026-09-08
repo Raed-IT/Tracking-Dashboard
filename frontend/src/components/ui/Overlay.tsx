@@ -1,0 +1,8 @@
+"use client";
+import { useEffect, type ReactNode } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+
+function useEscape(open: boolean, onClose: () => void) { useEffect(() => { if (!open) return; const listener = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); }; document.addEventListener("keydown", listener); return () => document.removeEventListener("keydown", listener); }, [open, onClose]); }
+export function Dialog({ open, onClose, title, description, children }: { open: boolean; onClose: () => void; title: string; description?: string; children: ReactNode }) { useEscape(open, onClose); if (!open) return null; return <div className="overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header><div><h2 id="dialog-title">{title}</h2>{description && <p>{description}</p>}</div><Button variant="ghost" size="icon" onClick={onClose} aria-label="Close dialog"><X /></Button></header>{children}</section></div>; }
+export function DetailDrawer({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) { useEscape(open, onClose); if (!open) return null; return <div className="drawer-overlay" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><aside className="detail-drawer" role="dialog" aria-modal="true" aria-label={title}><header><h2>{title}</h2><Button variant="ghost" size="icon" onClick={onClose} aria-label="Close details"><X /></Button></header>{children}</aside></div>; }

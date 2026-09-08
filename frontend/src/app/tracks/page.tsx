@@ -1,0 +1,1 @@
+import {AuthGate} from "@/components/auth/AuthGate";import {OperationsDrawer} from "@/components/navigation/OperationsDrawer";import {TrackWorkspace} from "@/components/operations/TrackWorkspace";export default function TracksPage(){return <AuthGate><OperationsDrawer><TrackWorkspace/></OperationsDrawer></AuthGate>}

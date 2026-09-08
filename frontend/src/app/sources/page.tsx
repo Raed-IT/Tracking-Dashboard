@@ -1,0 +1,1 @@
+import {AuthGate} from "@/components/auth/AuthGate";import {OperationsDrawer} from "@/components/navigation/OperationsDrawer";import {SourceWorkspace} from "@/components/operations/SourceWorkspace";export default function SourcesPage(){return <AuthGate><OperationsDrawer><SourceWorkspace/></OperationsDrawer></AuthGate>}

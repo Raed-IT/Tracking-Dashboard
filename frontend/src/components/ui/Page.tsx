@@ -1,0 +1,4 @@
+import type { ReactNode } from "react";
+export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description: string; actions?: ReactNode }) { return <header className="page-header"><div>{eyebrow && <span className="eyebrow">{eyebrow}</span>}<h1>{title}</h1><p>{description}</p></div>{actions && <div className="page-header__actions">{actions}</div>}</header>; }
+export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) { return <div className="empty-state"><div className="empty-state__mark">⌁</div><h3>{title}</h3><p>{description}</p>{action}</div>; }
+export function ErrorState({ onRetry }: { onRetry?: () => void }) { return <div className="error-state"><strong>Unable to load this workspace.</strong><p>Please try again. Technical details have been logged.</p>{onRetry && <button className="ui-button ui-button--secondary" onClick={onRetry}>Retry</button>}</div>; }

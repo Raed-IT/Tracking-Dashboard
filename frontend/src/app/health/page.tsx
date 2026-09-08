@@ -1,0 +1,1 @@
+import {AuthGate} from "@/components/auth/AuthGate";import {OperationsDrawer} from "@/components/navigation/OperationsDrawer";import {HealthWorkspace} from "@/components/operations/HealthWorkspace";export default function HealthPage(){return <AuthGate><OperationsDrawer><HealthWorkspace/></OperationsDrawer></AuthGate>}

@@ -1,7 +1,11 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
-import { useTrackingStore } from "@/stores/tracking-store";
-import type { Track } from "@/types";
+
+declare global {
+    interface Window {
+        Pusher: typeof Pusher;
+    }
+}
 
 export function connectTracking(): () => void {
     window.Pusher = Pusher;
