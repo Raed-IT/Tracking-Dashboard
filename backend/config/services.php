@@ -13,7 +13,24 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'flightradar24' => [
+        'api_key' => env('FR24_API_KEY'),
 
+        'base_url' => env(
+            'FR24_API_BASE_URL',
+            'https://fr24api.flightradar24.com/api'
+        ),
+
+        'bounds' => env(
+            'FR24_BOUNDS',
+            '43,-76,38,-69'
+        ),
+
+        'limit' => (int) env(
+            'FR24_LIMIT',
+            1000
+        ),
+    ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

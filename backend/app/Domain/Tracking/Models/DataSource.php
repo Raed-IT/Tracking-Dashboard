@@ -24,7 +24,25 @@ final class DataSource extends Model
     }
 
     protected function casts(): array
-    {
-        return ['enabled' => 'boolean', 'configuration' => 'encrypted:array', 'health_metadata' => 'array', 'last_message_at' => 'datetime', 'last_success_at' => 'datetime', 'last_error_at' => 'datetime'];
-    }
+{
+    return [
+        'configuration' => 'array',
+        'health_metadata' => 'array',
+
+        'enabled' => 'boolean',
+
+        'last_message_at' => 'datetime',
+        'last_success_at' => 'datetime',
+        'last_error_at' => 'datetime',
+
+        'messages_per_minute' => 'decimal:2',
+
+        'latency_ms' => 'integer',
+        'error_count' => 'integer',
+    ];
+}
+    // protected function casts(): array
+    // {
+    //     return ['enabled' => 'boolean', 'configuration' => 'encrypted:array', 'health_metadata' => 'array', 'last_message_at' => 'datetime', 'last_success_at' => 'datetime', 'last_error_at' => 'datetime'];
+    // }
 }

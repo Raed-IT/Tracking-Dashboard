@@ -3,7 +3,7 @@ import "./globals.css";
 import { AppPreferences } from "@/components/providers/AppPreferences";
 
 export const metadata: Metadata = {
-  title: "FusionOps — Air Operations",
+  title: "Air Operations",
   description: "Live multi-source aircraft tracking and operational awareness.",
 };
 

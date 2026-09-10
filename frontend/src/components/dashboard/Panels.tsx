@@ -1,9 +1,178 @@
 "use client";
-import {Activity,AlertTriangle,Check,Layers3,Radio} from "lucide-react";
-import {acknowledgeAlert} from "@/services/api";
-import {useTrackingStore} from "@/stores/tracking-store";
-import {useAuthStore} from "@/stores/auth-store";
-import type {DataSource,OperatorAlert} from "@/types/tracking";
-import {StatusBadge} from "@/components/ui/StatusBadge";
-export function LeftPanel({sources,onlineSources}:{sources:DataSource[];onlineSources:number}){const visible=useTrackingStore(s=>s.visibleTypes),toggle=useTrackingStore(s=>s.toggleType),canManage=useAuthStore(s=>s.can("sources.manage"));return <aside className="rounded-2xl border border-white/[.07] bg-slate-900/70 p-4"><div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[.18em] text-slate-500"><span>Network</span><span className="text-emerald-300">Live</span></div><div className="my-5"><strong className="text-2xl text-white">{onlineSources}<small className="text-sm text-slate-600"> / {sources.length}</small></strong><div className="mt-1 text-xs text-slate-600">data sources online</div><div className="mt-3 h-1 overflow-hidden rounded-full bg-white/5"><i className="block h-full rounded-full bg-emerald-300" style={{width:`${sources.length?onlineSources/sources.length*100:0}%`}}/></div></div><h2 className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400"><Radio size={14}/>Data sources{canManage&&<b className="ml-auto text-[8px] text-cyan-300">Manage</b>}</h2><div className="space-y-1">{sources.map(s=><div className="flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-white/[.025]" key={s.id}><i className={`h-1.5 w-1.5 rounded-full ${s.status==="online"?"bg-emerald-300":s.status==="degraded"?"bg-amber-300":"bg-rose-300"}`}/><span className="min-w-0 flex-1 truncate text-xs text-slate-300">{s.name}<small className="mt-0.5 block text-[9px] text-slate-600">{Math.round(s.messages_per_minute)} msg/min · {s.latency_ms??"—"} ms</small></span></div>)}</div><h2 className="mb-3 mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400"><Layers3 size={14}/>Operational layers</h2><div className="space-y-1">{["aircraft","drone","vehicle","vessel","unknown"].map(t=><label key={t} className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-xs capitalize text-slate-400 hover:bg-white/[.025]"><span>{t}</span><input type="checkbox" checked={visible.has(t)} onChange={()=>toggle(t)}/></label>)}</div></aside>}
-export function RightPanel({alerts,setAlerts}:{alerts:OperatorAlert[];setAlerts:React.Dispatch<React.SetStateAction<OperatorAlert[]>>}){const tracks=useTrackingStore(s=>s.tracks),id=useTrackingStore(s=>s.selectedId),t=id?tracks.get(id):undefined;const acknowledge=async(id:string)=>{await acknowledgeAlert(id);setAlerts(cur=>cur.filter(a=>a.id!==id))};return <aside className="rounded-2xl border border-white/[.07] bg-slate-900/70 p-4"><div className="flex items-center justify-between"><h2 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400"><AlertTriangle size={14}/>Active incidents</h2><StatusBadge status={alerts.length?`${alerts.length} open`:"clear"}/></div><div className="mt-4 space-y-2">{alerts.map(a=><article key={a.id} className="rounded-xl border border-white/[.06] bg-white/[.025] p-3"><StatusBadge status={a.severity}/><strong className="mt-2 block text-xs text-slate-200">{a.title}</strong><p className="mt-1 text-[10px] leading-4 text-slate-600">{a.message}</p><button onClick={()=>void acknowledge(a.id)} className="mt-3 inline-flex items-center gap-1 text-[9px] font-bold text-cyan-300"><Check size={12}/>Acknowledge</button></article>)}{alerts.length===0&&<div className="py-8 text-center text-xs text-slate-600">No active alerts</div>}</div><h2 className="mb-3 mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400"><Activity size={14}/>Selected target</h2>{t?<div className="rounded-xl border border-cyan-300/10 bg-cyan-300/[.03] p-3"><strong className="text-sm text-white">{t.callsign??t.id}</strong><div className="mt-1 text-[10px] uppercase text-slate-600">{t.classification} · {t.type}</div><dl className="mt-4 grid grid-cols-2 gap-3">{[["Position",`${t.latitude.toFixed(4)}, ${t.longitude.toFixed(4)}`],["Altitude",`${t.altitude??"—"} ft`],["Speed",`${t.speed??"—"} kt`],["Heading",`${t.heading?.toFixed(0)??"—"}°`],["Confidence",`${Math.round(t.confidence*100)}%`],["Status",t.status]].map(([k,v])=><div key={k}><dt className="text-[8px] uppercase tracking-wider text-slate-600">{k}</dt><dd className="mt-1 text-[10px] text-slate-300">{v}</dd></div>)}</dl></div>:<div className="rounded-xl border border-dashed border-white/[.07] p-8 text-center text-xs text-slate-600">Select a target on the map</div>}</aside>}
+import { Activity, AlertTriangle, Check, Layers3, Radio } from "lucide-react";
+import { acknowledgeAlert } from "@/services/api";
+import { useTrackingStore } from "@/stores/tracking-store";
+import { useAuthStore } from "@/stores/auth-store";
+import type { DataSource, OperatorAlert } from "@/types/tracking";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+export function LeftPanel({
+  sources,
+  onlineSources,
+}: {
+  sources: DataSource[];
+  onlineSources: number;
+}) {
+  const visible = useTrackingStore((s) => s.visibleTypes),
+    toggle = useTrackingStore((s) => s.toggleType),
+    canManage = useAuthStore((s) => s.can("sources.manage"));
+  return (
+    <aside className="rounded-2xl border border-white/[.07] bg-slate-900/70 p-4">
+      <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[.18em] text-slate-500">
+        <span>Network</span>
+        <span className="text-emerald-300">Live</span>
+      </div>
+      <div className="my-5">
+        <strong className="text-2xl text-white">
+          {onlineSources}
+          <small className="text-sm text-slate-600"> / {sources.length}</small>
+        </strong>
+        <div className="mt-1 text-xs text-slate-600">data sources online</div>
+        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/5">
+          <i
+            className="block h-full rounded-full bg-emerald-300"
+            style={{
+              width: `${sources.length ? (onlineSources / sources.length) * 100 : 0}%`,
+            }}
+          />
+        </div>
+      </div>
+      <h2 className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <Radio size={14} />
+        Data sources
+        {canManage && (
+          <b className="ml-auto text-[8px] text-cyan-300">Manage</b>
+        )}
+      </h2>
+      <div className="space-y-1">
+        {sources.map((s) => (
+          <div
+            className="flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-white/[.025]"
+            key={s.id}
+          >
+            <i
+              className={`h-1.5 w-1.5 rounded-full ${s.status === "online" ? "bg-emerald-300" : s.status === "degraded" ? "bg-amber-300" : "bg-rose-300"}`}
+            />
+            <span className="min-w-0 flex-1 truncate text-xs text-slate-300">
+              {s.name}
+              <small className="mt-0.5 block text-[9px] text-slate-600">
+                {Math.round(s.messages_per_minute)} msg/min ·{" "}
+                {s.latency_ms ?? "—"} ms
+              </small>
+            </span>
+          </div>
+        ))}
+      </div>
+      <h2 className="mb-3 mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <Layers3 size={14} />
+        Operational layers
+      </h2>
+      <div className="space-y-1">
+        {["aircraft", "drone", "vehicle", "vessel", "unknown"].map((t) => (
+          <label
+            key={t}
+            className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-xs capitalize text-slate-400 hover:bg-white/[.025]"
+          >
+            <span>{t}</span>
+            <input
+              type="checkbox"
+              checked={visible.has(t)}
+              onChange={() => toggle(t)}
+            />
+          </label>
+        ))}
+      </div>
+    </aside>
+  );
+}
+export function RightPanel({
+  alerts,
+  setAlerts,
+}: {
+  alerts: OperatorAlert[];
+  setAlerts: React.Dispatch<React.SetStateAction<OperatorAlert[]>>;
+}) {
+  const tracks = useTrackingStore((s) => s.tracks),
+    id = useTrackingStore((s) => s.selectedId),
+    t = id ? tracks.get(id) : undefined;
+  const acknowledge = async (id: string) => {
+    await acknowledgeAlert(id);
+    setAlerts((cur) => cur.filter((a) => a.id !== id));
+  };
+  return (
+    <aside className="rounded-2xl border border-white/[.07] bg-slate-900/70 p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <AlertTriangle size={14} />
+          Active incidents
+        </h2>
+        <StatusBadge
+          status={alerts.length ? `${alerts.length} open` : "clear"}
+        />
+      </div>
+      <div className="mt-4 space-y-2">
+        {alerts.map((a) => (
+          <article
+            key={a.id}
+            className="rounded-xl border border-white/[.06] bg-white/[.025] p-3"
+          >
+            <StatusBadge status={a.severity} />
+            <strong className="mt-2 block text-xs text-slate-200">
+              {a.title}
+            </strong>
+            <p className="mt-1 text-[10px] leading-4 text-slate-600">
+              {a.message}
+            </p>
+            <button
+              onClick={() => void acknowledge(a.id)}
+              className="mt-3 inline-flex items-center gap-1 text-[9px] font-bold text-cyan-300"
+            >
+              <Check size={12} />
+              Acknowledge
+            </button>
+          </article>
+        ))}
+        {alerts.length === 0 && (
+          <div className="py-8 text-center text-xs text-slate-600">
+            No active alerts
+          </div>
+        )}
+      </div>
+      <h2 className="mb-3 mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <Activity size={14} />
+        Selected target
+      </h2>
+      {t ? (
+        <div className="rounded-xl border border-cyan-300/10 bg-cyan-300/[.03] p-3">
+          <strong className="text-sm text-white">{t.callsign ?? t.id}</strong>
+          <div className="mt-1 text-[10px] uppercase text-slate-600">
+            {t.classification} · {t.type}
+          </div>
+          <dl className="mt-4 grid grid-cols-2 gap-3">
+            {[
+              [
+                "Position",
+                `${t.latitude.toFixed(4)}, ${t.longitude.toFixed(4)}`,
+              ],
+              ["Altitude", `${t.altitude ?? "—"} ft`],
+              ["Speed", `${t.speed ?? "—"} kt`],
+              ["Heading", `${t.heading?.toFixed(0) ?? "—"}°`],
+              ["Confidence", `${Math.round(t.confidence * 100)}%`],
+              ["Status", t.status],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <dt className="text-[8px] uppercase tracking-wider text-slate-600">
+                  {k}
+                </dt>
+                <dd className="mt-1 text-[10px] text-slate-300">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-white/[.07] p-8 text-center text-xs text-slate-600">
+          Select a target on the map
+        </div>
+      )}
+    </aside>
+  );
+}

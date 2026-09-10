@@ -167,12 +167,10 @@ export function OperationsDrawer({
           {!collapsed && (
             <div className="min-w-0">
               <div className="text-sm font-bold tracking-[.18em]">
-                FUSION<span className="text-cyan-300">OPS</span>
+                  <span className="text-cyan-300">Air</span>operations
               </div>
 
-              <div className="text-[9px] uppercase tracking-[.2em] text-slate-500 dark:text-slate-600">
-                Air operations
-              </div>
+               
             </div>
           )}
 

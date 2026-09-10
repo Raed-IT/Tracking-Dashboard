@@ -143,12 +143,12 @@ export default function LoginPage() {
 
               <div>
                 <div className="text-sm font-bold tracking-[0.24em]">
-                  FUSION
+                  Air Operations
                   <span className="text-cyan-300">OPS</span>
                 </div>
 
                 <div className="mt-1 text-[9px] uppercase tracking-[0.24em] text-slate-600">
-                  Air Operations Platform
+                    Platform
                 </div>
               </div>
             </div>
