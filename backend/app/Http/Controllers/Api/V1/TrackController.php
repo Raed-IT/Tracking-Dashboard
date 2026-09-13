@@ -16,7 +16,7 @@ final class TrackController extends Controller
 
         $q = Track::query()
             // ->where('organization_id', $r->user()->currentOrganizationId()); //fix insert tracks with organization_id 
-            ->where('last_seen_at', '>=', now()->subMinutes(600));
+            ->where('last_seen_at', '>=', now()->subMinutes(1));
         //  if ($r->bbox) {
         //  [$minLng, $minLat, $maxLng, $maxLat] = array_map('floatval', explode(',', $r->bbox));
         //      $q->whereBetween('longitude', [$minLng, $maxLng])->whereBetween('latitude', [$minLat, $maxLat]);

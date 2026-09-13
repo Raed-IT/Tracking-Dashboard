@@ -18,12 +18,10 @@ return [
 
         'base_url' => env(
             'FR24_API_BASE_URL',
-            'https://fr24api.flightradar24.com/api'
-        ),
+         ),
 
         'bounds' => env(
             'FR24_BOUNDS',
-            '35.5,32.3,42.4,37.4'
         ),
 
         'limit' => (int) env(

@@ -7,7 +7,7 @@ namespace App\Domain\Tracking\Services;
 use App\Domain\Tracking\Contracts\DataSourceInterface;
 use App\Domain\Tracking\Models\DataSource;
 use App\Domain\Tracking\Sources\Flightradar24\Flightradar24Adapter;
-use RuntimeException;
+use Illuminate\Support\Facades\Log;use RuntimeException;
 
 final class DataSourceAdapterFactory
 {
@@ -29,6 +29,12 @@ final class DataSourceAdapterFactory
     private function makeFlightradar24(
         DataSource $source
     ): Flightradar24Adapter {
+        
+    Log::info("makeFlightradar24",);
+
+    Log::info(config(
+                    'services.flightradar24.bounds',
+                 ));
         $databaseConfig = is_array($source->configuration)
             ? $source->configuration
             : [];
@@ -45,8 +51,8 @@ final class DataSourceAdapterFactory
 
             'bounds' => $databaseConfig['bounds']
                 ?? config(
-                    'services.flightradar24.bounds'
-                ),
+                    'services.flightradar24.bounds',
+                 ),
 
             'limit' => (int) (
                 $databaseConfig['limit']

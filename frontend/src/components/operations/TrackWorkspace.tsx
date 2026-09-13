@@ -88,7 +88,7 @@ export function TrackWorkspace() {
     setLoading(true);
     setFailed(false);
     try {
-      setTracks(await fetchTracks("35.5,32.3,42.4,37.4"));
+      setTracks(await fetchTracks("38.3,31.4,35.0,43.0"));
     } catch {
       setFailed(true);
     } finally {
