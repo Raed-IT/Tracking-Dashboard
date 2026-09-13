@@ -13,25 +13,32 @@ final class TrackController extends Controller
 {
     public function index(TrackIndexRequest $r)
     {
+
         $q = Track::query()
-            ->where('organization_id', $r->user()->currentOrganizationId())
-            ->where('last_seen_at', '>=', now()->subMinutes(10));
-        if ($r->bbox) {
-            [$minLng,$minLat,$maxLng,$maxLat] = array_map('floatval', explode(',', $r->bbox));
-            $q->whereBetween('longitude', [$minLng, $maxLng])->whereBetween('latitude', [$minLat, $maxLat]);
-        } foreach (['type', 'classification', 'status'] as $f) {
+            // ->where('organization_id', $r->user()->currentOrganizationId()); //fix insert tracks with organization_id 
+            ->where('last_seen_at', '>=', now()->subMinutes(10000));
+         if ($r->bbox) {
+         [$minLng, $minLat, $maxLng, $maxLat] = array_map('floatval', explode(',', $r->bbox));
+             $q->whereBetween('longitude', [$minLng, $maxLng])->whereBetween('latitude', [$minLat, $maxLat]);
+        }
+
+        foreach (['type', 'classification', 'status'] as $f) {
             if ($r->filled($f)) {
                 $q->where($f, $r->string($f));
             }
-        } if ($r->filled('source')) {
+        }
+
+        if ($r->filled('source')) {
             $q->whereJsonContains('source_ids', (int) $r->source);
-        } if ($r->filled('min_altitude')) {
+        }
+        if ($r->filled('min_altitude')) {
             $q->where('altitude', '>=', $r->float('min_altitude'));
-        } if ($r->filled('max_altitude')) {
+        }
+        if ($r->filled('max_altitude')) {
             $q->where('altitude', '<=', $r->float('max_altitude'));
         }
 
-return TrackResource::collection($q->orderByDesc('last_seen_at')->paginate($r->integer('per_page', 250)));
+        return TrackResource::collection($q->orderByDesc('last_seen_at')->paginate($r->integer('per_page', 250)));
     }
 
     public function show(Track $track): TrackResource
