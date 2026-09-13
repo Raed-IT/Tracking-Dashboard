@@ -158,7 +158,22 @@ services:
     networks:
       - tracking
 
-
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: tracking_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: tracking
+      PMA_PASSWORD: tracking_password
+    ports:
+      - "8081:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - tracking
   # ============================================================
   # Redis
   # ============================================================

@@ -30,7 +30,7 @@ final readonly class ObservationData
         public ?string $classification = null,
 
         public ?float $confidence = null,
-
+        public array $externalIdentifiers = [],
         public array $metadata = [],
     ) {
     }

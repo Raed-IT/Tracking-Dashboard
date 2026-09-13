@@ -2,6 +2,7 @@
 
 use App\Domain\Tracking\Jobs\FetchSourceDataJob;
 use App\Domain\Tracking\Models\DataSource;
+use App\Jobs\FetchFlightradar24Aircraft;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -13,3 +14,6 @@ Artisan::command('inspire', function () {
 Schedule::call(function (): void {
     DataSource::query()->where('enabled', true)->where('driver', 'mock_aircraft')->pluck('id')->each(fn (int $id) => FetchSourceDataJob::dispatch($id));
 })->name('mock-source-ingestion')->everyTenSeconds()->withoutOverlapping();
+Schedule::job(
+    new FetchFlightradar24Aircraft()
+)->everyFiveSeconds();
