@@ -23,7 +23,7 @@ return [
 
         'bounds' => env(
             'FR24_BOUNDS',
-            '43,-76,38,-69'
+            '35.5,32.3,42.4,37.4'
         ),
 
         'limit' => (int) env(

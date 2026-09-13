@@ -6,8 +6,16 @@ use App\Http\Controllers\Api\V1\SystemController;
 use App\Http\Controllers\Api\V1\TrackController;
 use App\Http\Controllers\Api\V1\OrganizationUserController;
 use App\Http\Controllers\Api\V1\AlertController;
+use App\Jobs\FetchFlightradar24Aircraft;
 use Illuminate\Support\Facades\Route;
+Route::get('/fr24', function () {
+    FetchFlightradar24Aircraft::dispatch();
 
+    return response()->json([
+        'success' => true,
+        'message' => 'FetchFlightradar24Aircraft dispatched.',
+    ]);
+});
 Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::get('system/status', SystemController::class);

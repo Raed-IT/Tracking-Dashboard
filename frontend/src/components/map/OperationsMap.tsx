@@ -31,6 +31,11 @@ type MapStyleOption = {
 
 const MAP_STYLES: MapStyleOption[] = [
   {
+    id: "bright",
+    label: "Bright",
+    url: "https://tiles.openfreemap.org/styles/bright",
+  },
+  {
     id: "operational",
     label: "Operational",
     url: "https://demotiles.maplibre.org/style.json",
@@ -40,18 +45,14 @@ const MAP_STYLES: MapStyleOption[] = [
     label: "Liberty",
     url: "https://tiles.openfreemap.org/styles/liberty",
   },
-  {
-    id: "bright",
-    label: "Bright",
-    url: "https://tiles.openfreemap.org/styles/bright",
-  },
+  
 ];
 
 export function OperationsMap() {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<MlMap | null>(null);
   const replace = useTrackingStore((state) => state.replace);
-  const [styleId, setStyleId] = useState("operational");
+  const [styleId, setStyleId] = useState("bright");
   const [styleVersion, setStyleVersion] = useState(0);
 
   useEffect(() => {
