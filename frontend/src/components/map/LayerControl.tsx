@@ -117,9 +117,9 @@ export function LayerControl({ map }: LayerControlProps) {
 
 function getMapLayerIds(layer: string): string[] {
   switch (layer) {
-    case "aircraft":
-      return ["aircraft"];
-    case "alerts":
+case "aircraft":
+  return ["aircraft", "aircraft-trails"];
+      case "alerts":
       return ["alerts"];
     case "routes":
       return ["routes"];
