@@ -7,7 +7,14 @@ declare global {
     }
 }
 
-export function connectTracking(): () => void {
+type ReverbCallbacks = {
+    onMessage?: (data: { message: string }) => void;
+    onEvent?: (eventName: string, data: unknown) => void;
+};
+
+export function connectTracking(
+    callbacks: ReverbCallbacks = {}
+): () => void {
     window.Pusher = Pusher;
 
     const host =
@@ -15,27 +22,21 @@ export function connectTracking(): () => void {
         window.location.hostname;
 
     const port = Number(
-        process.env.NEXT_PUBLIC_REVERB_PORT ?? 8080
+        process.env.NEXT_PUBLIC_REVERB_PORT ?? 9090
     );
 
     const scheme =
         process.env.NEXT_PUBLIC_REVERB_SCHEME ?? "http";
 
-    console.log("Connecting to Reverb:", {
-        host,
-        port,
-        scheme,
-    });
+    const key =
+        process.env.NEXT_PUBLIC_REVERB_APP_KEY ??
+        "tracking-key";
 
     const echo = new Echo({
         broadcaster: "reverb",
-
-        key:
-            process.env.NEXT_PUBLIC_REVERB_APP_KEY ??
-            "tracking-key",
+        key,
 
         wsHost: host,
-
         wsPort: port,
         wssPort: port,
 
@@ -47,26 +48,38 @@ export function connectTracking(): () => void {
                 : ["ws"],
     });
 
-    const tracksChannel = echo.channel("tracks");
+    const channel = echo.channel("test-channel");
 
-    const pusherChannel =
-        (tracksChannel as any).subscription;
+    channel.listen(
+        ".test.message",
+        (data: { message: string }) => {
+            console.log("🔥 REAL-TIME EVENT:", data);
 
-    // PRINT EVERY EVENT
-    pusherChannel.bind_global(
-        (eventName: string, data: unknown) => {
-            console.log(
-                "🔥 EVENT:",
-                eventName,
-                data
-            );
+            callbacks.onMessage?.(data);
         }
     );
 
-    
+    const pusherChannel = (channel as any).subscription;
+
+    if (pusherChannel) {
+        pusherChannel.bind_global(
+            (eventName: string, data: unknown) => {
+                console.log(
+                    "🔥 EVENT:",
+                    eventName,
+                    data
+                );
+
+                callbacks.onEvent?.(
+                    eventName,
+                    data
+                );
+            }
+        );
+    }
 
     return () => {
-        echo.leave("tracks");
+        echo.leave("test-channel");
         echo.disconnect();
     };
 }

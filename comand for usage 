@@ -1,0 +1,2 @@
+docker exec tracking_redis redis-cli FLUSHDB => clear redis
+docker compose down scheduler 

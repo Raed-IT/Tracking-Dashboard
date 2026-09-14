@@ -7,10 +7,10 @@ use App\Http\Controllers\Api\V1\TrackController;
 use App\Http\Controllers\Api\V1\OrganizationUserController;
 use App\Http\Controllers\Api\V1\AlertController;
 use App\Jobs\FetchFlightradar24Aircraft;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-Route::get('/fr24', function () {
-    FetchFlightradar24Aircraft::dispatch();
-
+Route::get('/fr24', function (Request $request) {
+event(new \App\Events\ReverbTestEvent($request->query('t')));
     return response()->json([
         'success' => true,
         'message' => 'FetchFlightradar24Aircraft dispatched.',

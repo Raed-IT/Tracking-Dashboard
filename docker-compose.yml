@@ -1,45 +1,3 @@
-# name: fusion-ops
-# services:
-#   nginx:
-#     image: nginx:1.29-alpine
-#     ports: ["8088:80"]
-#     volumes: ["./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro","./backend/public:/var/www/public:ro"]
-#     depends_on: [api, nextjs]
-#   api: &api
-#     build: {context: ., dockerfile: docker/php/Dockerfile}
-#     env_file: .env
-#     volumes: ["./backend:/var/www"]
-#     depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
-#   worker:
-#     <<: *api
-#     command: php artisan horizon
-#   scheduler:
-#     <<: *api
-#     command: php artisan schedule:work
-#   reverb:
-#     <<: *api
-#     command: php artisan reverb:start --host=0.0.0.0 --port=8080
-#   nextjs:
-#     build: {context: ./frontend, dockerfile: Dockerfile}
-#     env_file: .env
-#     volumes: ["./frontend:/app","frontend_modules:/app/node_modules"]
-#   postgres:
-#     image: postgis/postgis:17-3.5-alpine
-#     environment: {POSTGRES_DB: "${DB_DATABASE:-fusion_ops}", POSTGRES_USER: "${DB_USERNAME:-fusion}", POSTGRES_PASSWORD: "${DB_PASSWORD:-fusion_dev}"}
-#     volumes: ["postgres_data:/var/lib/postgresql/data"]
-#     healthcheck: {test: ["CMD-SHELL","pg_isready -U ${DB_USERNAME:-fusion} -d ${DB_DATABASE:-fusion_ops}"], interval: 5s, timeout: 5s, retries: 20}
-#   redis:
-#     image: redis:8-alpine
-#     command: redis-server --appendonly yes
-#     volumes: ["redis_data:/data"]
-#     healthcheck: {test: ["CMD","redis-cli","ping"], interval: 5s, timeout: 3s, retries: 20}
-#   minio:
-#     image: minio/minio:latest
-#     command: server /data --console-address :9001
-#     environment: {MINIO_ROOT_USER: "${AWS_ACCESS_KEY_ID:-minio}", MINIO_ROOT_PASSWORD: "${AWS_SECRET_ACCESS_KEY:-miniosecret}"}
-#     ports: ["9001:9001"]
-#     volumes: ["minio_data:/data"]
-# volumes: {postgres_data: {}, redis_data: {}, minio_data: {}, frontend_modules: {}}
 services:
 
   # ============================================================
@@ -49,6 +7,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+
     container_name: tracking_app
     restart: unless-stopped
     working_dir: /var/www
@@ -158,22 +117,32 @@ services:
     networks:
       - tracking
 
+
+  # ============================================================
+  # PHPMyAdmin
+  # ============================================================
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: tracking_phpmyadmin
     restart: unless-stopped
+
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
       PMA_USER: tracking
       PMA_PASSWORD: tracking_password
+
     ports:
       - "8081:80"
+
     depends_on:
       mysql:
         condition: service_healthy
+
     networks:
       - tracking
+
+
   # ============================================================
   # Redis
   # ============================================================
@@ -240,34 +209,35 @@ services:
 
 
   # ============================================================
-  # Laravel Scheduler
+  # Flightradar24 Fetcher
+  # Runs every 6 seconds
   # ============================================================
-  scheduler:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+  # scheduler:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
 
-    container_name: tracking_scheduler
-    restart: unless-stopped
+  #   container_name: tracking_scheduler
+  #   restart: unless-stopped
 
-    working_dir: /var/www
+  #   working_dir: /var/www
 
-    command:
-      - php
-      - artisan
-      - schedule:work
+  #   command:
+  #     - php
+  #     - artisan
+  #     - flights:fetch
 
-    volumes:
-      - ./backend:/var/www
+  #   volumes:
+  #     - ./backend:/var/www
 
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
 
-    networks:
-      - tracking
+  #   networks:
+  #     - tracking
 
 
   # ============================================================

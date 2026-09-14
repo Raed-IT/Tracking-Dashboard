@@ -1,18 +1,20 @@
 <?php
 
-use App\Domain\Tracking\Jobs\FetchSourceDataJob;
-use App\Domain\Tracking\Models\DataSource;
-use App\Jobs\FetchFlightradar24Aircraft;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
- 
+Schedule::call(function () {
+    static $counter = 0;
 
-Schedule::job(new FetchFlightradar24Aircraft())
-    ->everyFiveSeconds()
-    ->withoutOverlapping();
+    $counter++;
+
+    event(new \App\Events\ReverbTestEvent($counter));
+
+    Log::info("ReverbTestEvent dispatched with counter: {$counter}");
+})->everySecond();

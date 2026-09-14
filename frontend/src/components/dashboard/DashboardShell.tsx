@@ -14,7 +14,7 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { OperationsMap } from "@/components/map/OperationsMap";
 import { AuthGate } from "@/components/auth/AuthGate";
@@ -23,8 +23,26 @@ import { useDashboardController } from "@/controllers/useDashboardController";
 import { PageHeader } from "@/components/ui/Page";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useTranslation } from "@/hooks/useTranslation";
+import { connectTracking } from "@/services/realtime";
 
-function SecuredDashboard() {
+function SecuredDashboard() {  
+    const [message, setMessage] = useState("0");
+    const [connected, setConnected] = useState(false);
+
+    useEffect(() => {
+        const disconnect = connectTracking({
+            onMessage: (data) => {
+                setMessage(data.message);
+            },
+            onConnected: () => {
+                setConnected(true);
+            },
+        });
+
+        return disconnect;
+    }, []);
+
+  
   const dashboard = useDashboardController();
   const { t } = useTranslation();
 const [fullscreen, setFullscreen] = useState(false);
@@ -36,7 +54,8 @@ const [fullscreen, setFullscreen] = useState(false);
   const stats = [
     {
       label: t.dashboard.activeTracks,
-      value: dashboard.metrics.tracks,
+      // value: dashboard.metrics.tracks,
+      value: message,
       detail: t.dashboard.activeTracksDetail,
       icon: RadioTower,
       accent: "text-cyan-500 dark:text-cyan-300",

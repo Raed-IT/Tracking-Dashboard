@@ -15,7 +15,7 @@ final class TrackController extends Controller
     {
 
         $q = Track::query()
-            ->where('last_seen_at', '>=', now()->subMinutes(1));
+            ->where('last_seen_at', '>=', now()->subMinutes(100));
         foreach (['type', 'classification', 'status'] as $f) {
             if ($r->filled($f)) {
                 $q->where($f, $r->string($f));
