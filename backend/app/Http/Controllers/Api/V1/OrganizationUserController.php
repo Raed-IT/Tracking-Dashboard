@@ -25,6 +25,8 @@ final class OrganizationUserController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'role' => ['nullable', 'in:administrator,supervisor,operator,viewer'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'sort' => ['nullable', 'in:name,email,role,created_at'],
+            'direction' => ['nullable', 'in:asc,desc'],
         ]);
 
         return OrganizationUserResource::collection($this->users->paginate(
@@ -32,6 +34,8 @@ final class OrganizationUserController extends Controller
             (int) ($validated['per_page'] ?? 25),
             $validated['search'] ?? null,
             $validated['role'] ?? null,
+            $validated['sort'] ?? 'name',
+            $validated['direction'] ?? 'asc',
         ));
     }
 

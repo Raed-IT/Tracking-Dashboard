@@ -14,38 +14,23 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { OperationsMap } from "@/components/map/OperationsMap";
 import { AuthGate } from "@/components/auth/AuthGate";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { OperationsDrawer } from "@/components/navigation/OperationsDrawer";
 import { useDashboardController } from "@/controllers/useDashboardController";
 import { PageHeader } from "@/components/ui/Page";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useTranslation } from "@/hooks/useTranslation";
-import { connectTracking } from "@/services/realtime";
+import { useRealtimeStore } from "@/stores/realtime-store";
 
-function SecuredDashboard() {  
-    const [message, setMessage] = useState("0");
-    const [connected, setConnected] = useState(false);
-
-    useEffect(() => {
-        const disconnect = connectTracking({
-            onMessage: (data) => {
-                setMessage(data.message);
-            },
-            onConnected: () => {
-                setConnected(true);
-            },
-        });
-
-        return disconnect;
-    }, []);
-
-  
+function SecuredDashboard() {
+  const realtimeStatus = useRealtimeStore((state) => state.status);
   const dashboard = useDashboardController();
   const { t } = useTranslation();
-const [fullscreen, setFullscreen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const telemetry = dashboard.sources.reduce(
     (sum, source) => sum + source.messages_per_minute,
     0,
@@ -86,6 +71,11 @@ const [fullscreen, setFullscreen] = useState(false);
       bg: "bg-violet-500/10 dark:bg-violet-300/10",
     },
   ];
+  const realtimeCopy = {
+    connecting: t.common.realtimeConnecting,
+    connected: t.common.realtimeConnected,
+    disconnected: t.common.realtimeDisconnected,
+  }[realtimeStatus];
 
   return (
     <main className="mx-auto max-w-[1900px] p-3 sm:p-5 xl:p-7">
@@ -94,8 +84,7 @@ const [fullscreen, setFullscreen] = useState(false);
         title={t.dashboard.title}
         description={t.dashboard.description}
       />
-{message}
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         
         {stats.map(({ label, value, detail, icon: Icon, accent, bg }) => (
           <article
@@ -245,7 +234,7 @@ const [fullscreen, setFullscreen] = useState(false);
               {t.dashboard.systemStatus}
             </div>
             <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-              {t.dashboard.feedsOperational}
+              {realtimeCopy}
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[.07] dark:bg-slate-900/70">
@@ -276,7 +265,19 @@ export function DashboardShell() {
   return (
     <AuthGate>
       <OperationsDrawer>
-        <SecuredDashboard />
+        <PermissionGate
+          permission="dashboard.view"
+          fallback={
+            <main className="grid min-h-[70vh] place-items-center p-6 text-center">
+              <div>
+                <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Dashboard access is restricted</h1>
+                <p className="mt-2 text-sm text-slate-500">Ask an administrator to grant dashboard.view.</p>
+              </div>
+            </main>
+          }
+        >
+          <SecuredDashboard />
+        </PermissionGate>
       </OperationsDrawer>
     </AuthGate>
   );

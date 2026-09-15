@@ -24,9 +24,12 @@ import {
 } from "lucide-react";
 
 import { useAuthStore } from "@/stores/auth-store";
+import { useRealtimeStore } from "@/stores/realtime-store";
+import { useNoticeStore } from "@/stores/notice-store";
 import { Button } from "@/components/ui/Button";
 import { useAppPreferences } from "@/components/providers/AppPreferences";
 import { useTranslation } from "@/hooks/useTranslation";
+import { NoticeHost } from "@/components/ui/NoticeHost";
 
 const nav = [
   {
@@ -88,6 +91,8 @@ export function OperationsDrawer({
   const can = useAuthStore((state) => state.can);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const realtimeStatus = useRealtimeStore((state) => state.status);
+  const showNotice = useNoticeStore((state) => state.show);
 
   const { language, theme, toggleLanguage, toggleTheme } = useAppPreferences();
   const { t } = useTranslation();
@@ -95,6 +100,12 @@ export function OperationsDrawer({
   const [mobile, setMobile] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [palette, setPalette] = useState(false);
+
+  useEffect(() => {
+    if (realtimeStatus === "disconnected") {
+      showNotice("error", t.common.realtimeDisconnectedAlert);
+    }
+  }, [realtimeStatus, showNotice, t.common.realtimeDisconnectedAlert]);
 
   // Command palette shortcut
   useEffect(() => {
@@ -147,6 +158,7 @@ export function OperationsDrawer({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 selection:bg-cyan-300 selection:text-slate-950 dark:bg-slate-950 dark:text-slate-100">
+      <NoticeHost />
       {/* Mobile overlay */}
       {mobile && (
         <button
@@ -372,9 +384,36 @@ export function OperationsDrawer({
               <Bell size={17} />
             </Button>
 
-            <span className="ml-1 hidden items-center gap-1.5 rounded-full border border-emerald-400/15 bg-emerald-400/5 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-300 sm:flex">
-              <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-              {t.common.live}
+            <span
+              className={[
+                "ml-1 hidden items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider sm:flex",
+                realtimeStatus === "connected"
+                  ? "border-emerald-400/15 bg-emerald-400/5 text-emerald-600 dark:text-emerald-300"
+                  : realtimeStatus === "connecting"
+                    ? "border-amber-400/20 bg-amber-400/5 text-amber-600 dark:text-amber-300"
+                    : "border-rose-400/20 bg-rose-400/5 text-rose-600 dark:text-rose-300",
+              ].join(" ")}
+              role="status"
+              aria-live="polite"
+            >
+              <i
+                className={[
+                  "h-1.5 w-1.5 rounded-full",
+                  realtimeStatus === "connected"
+                    ? "bg-emerald-400"
+                    : realtimeStatus === "connecting"
+                      ? "animate-pulse bg-amber-400"
+                      : "bg-rose-400",
+                ].join(" ")}
+              />
+              {t.common.realtimeConnection}:{" "}
+              {t.common[
+                realtimeStatus === "connected"
+                  ? "realtimeConnected"
+                  : realtimeStatus === "connecting"
+                    ? "realtimeConnecting"
+                    : "realtimeDisconnected"
+              ]}
             </span>
           </div>
         </header>
@@ -382,6 +421,19 @@ export function OperationsDrawer({
         {/* Page content */}
         <main>{children}</main>
       </div>
+
+      {realtimeStatus === "connecting" && (
+        <div
+          className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/55 p-6 backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/90 px-5 py-4 text-sm text-slate-100 shadow-2xl">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-cyan-300" />
+            {t.common.realtimeConnecting}
+          </div>
+        </div>
+      )}
 
       {/* Command Palette */}
       {palette && (

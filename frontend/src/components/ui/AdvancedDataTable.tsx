@@ -33,6 +33,14 @@ export function AdvancedDataTable<T extends { id: string }>({
   isLoading = false,
   error,
   onRetry,
+  onQueryChange,
+  serverSide = false,
+  total,
+  externalPage,
+  externalPageSize,
+  onPageChange,
+  onPageSizeChange,
+  onSortChange,
 }: {
   data: T[];
   columns: DataColumn<T>[];
@@ -42,6 +50,14 @@ export function AdvancedDataTable<T extends { id: string }>({
   isLoading?: boolean;
   error?: boolean;
   onRetry?: () => void;
+  onQueryChange?: (query: string) => void;
+  serverSide?: boolean;
+  total?: number;
+  externalPage?: number;
+  externalPageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  onSortChange?: (id: string, direction: "asc" | "desc") => void;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -81,17 +97,21 @@ export function AdvancedDataTable<T extends { id: string }>({
     });
   }, [data, query, sort, columns]);
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const activePage = externalPage ?? page;
+  const activePageSize = externalPageSize ?? pageSize;
+  const recordCount = serverSide ? (total ?? data.length) : rows.length;
+  const pageCount = Math.max(1, Math.ceil(recordCount / activePageSize));
 
   useEffect(() => {
-    setPage((current) => Math.min(Math.max(current, 1), pageCount));
-  }, [pageCount]);
+    if (serverSide) onPageChange?.(Math.min(Math.max(activePage, 1), pageCount));
+    else setPage((current) => Math.min(Math.max(current, 1), pageCount));
+  }, [activePage, onPageChange, pageCount, serverSide]);
 
   useEffect(() => {
     setPage(1);
   }, [query, pageSize]);
 
-  const paged = rows.slice((page - 1) * pageSize, page * pageSize);
+  const paged = serverSide ? data : rows.slice((page - 1) * pageSize, page * pageSize);
   const selectedRows = data.filter((row) => selected.includes(row.id));
 
   const allOnPage =
@@ -119,7 +139,7 @@ export function AdvancedDataTable<T extends { id: string }>({
     (value) =>
       value === 1 ||
       value === pageCount ||
-      Math.abs(value - page) <= 1,
+      Math.abs(value - activePage) <= 1,
   );
 
   return (
@@ -130,7 +150,10 @@ export function AdvancedDataTable<T extends { id: string }>({
           <input
             className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-600"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              onQueryChange?.(event.target.value);
+            }}
             placeholder={searchPlaceholder || t.tables.searchRecords}
           />
         </label>
@@ -204,12 +227,11 @@ export function AdvancedDataTable<T extends { id: string }>({
                     onClick={() => {
                       if (!column.sortValue) return;
 
-                      setSort((current) =>
+                      const nextDirection = sort?.id === column.id && sort.direction === 1 ? "desc" : "asc";
+                      if (serverSide) onSortChange?.(column.id, nextDirection);
+                      else setSort((current) =>
                         current?.id === column.id
-                          ? {
-                              id: column.id,
-                              direction: (current.direction * -1) as 1 | -1,
-                            }
+                          ? { id: column.id, direction: (current.direction * -1) as 1 | -1 }
                           : { id: column.id, direction: 1 },
                       );
                     }}
@@ -314,19 +336,23 @@ export function AdvancedDataTable<T extends { id: string }>({
       <footer className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-xs text-slate-500 dark:border-white/[.06] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span>
-            {rows.length === 0
+            {recordCount === 0
               ? "0 records"
-              : `${(page - 1) * pageSize + 1}-${Math.min(
-                  page * pageSize,
-                  rows.length,
-                )} of ${rows.length}`}
+              : `${(activePage - 1) * activePageSize + 1}-${Math.min(
+                  activePage * activePageSize,
+                  recordCount,
+                )} of ${recordCount}`}
           </span>
 
           <label className="flex items-center gap-2">
             Rows
             <select
-              value={pageSize}
-              onChange={(event) => setPageSize(Number(event.target.value))}
+              value={activePageSize}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (serverSide) onPageSizeChange?.(next);
+                else setPageSize(next);
+              }}
               className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
             >
               {[10, 25, 50, 100].map((size) => (
@@ -341,8 +367,8 @@ export function AdvancedDataTable<T extends { id: string }>({
         <div className="flex items-center gap-1">
           <Button
             size="icon"
-            disabled={page <= 1}
-            onClick={() => setPage((value) => value - 1)}
+            disabled={activePage <= 1}
+            onClick={() => serverSide ? onPageChange?.(activePage - 1) : setPage((value) => value - 1)}
             aria-label={t.common.previous}
           >
             <ChevronLeft size={15} />
@@ -359,10 +385,10 @@ export function AdvancedDataTable<T extends { id: string }>({
                 )}
                 <button
                   type="button"
-                  onClick={() => setPage(value)}
+                  onClick={() => serverSide ? onPageChange?.(value) : setPage(value)}
                   className={[
                     "grid h-8 min-w-8 place-items-center rounded-lg px-2 transition",
-                    page === value
+                    activePage === value
                       ? "bg-cyan-400 font-semibold text-slate-950"
                       : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white",
                   ].join(" ")}
@@ -375,8 +401,8 @@ export function AdvancedDataTable<T extends { id: string }>({
 
           <Button
             size="icon"
-            disabled={page >= pageCount}
-            onClick={() => setPage((value) => value + 1)}
+            disabled={            activePage >= pageCount}
+            onClick={() => serverSide ? onPageChange?.(activePage + 1) : setPage((value) => value + 1)}
             aria-label={t.common.next}
           >
             <ChevronRight size={15} />

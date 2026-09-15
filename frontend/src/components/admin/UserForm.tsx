@@ -6,6 +6,7 @@ import { Check, KeyRound, Mail, Shield, UserRound } from "lucide-react";
 import { createOrganizationUser, updateOrganizationUser } from "@/services/api";
 import type { OrganizationUser, Role } from "@/types/auth";
 import { Button } from "@/components/ui/Button";
+import { useNoticeStore } from "@/stores/notice-store";
 
 const roles: Array<{ value: Role; label: string; description: string }> = [
   { value: "administrator", label: "Administrator", description: "Full access to users, sources, and operations." },
@@ -33,6 +34,7 @@ export function UserForm({
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const showNotice = useNoticeStore((state) => state.show);
   const selectedRole = roles.find((role) => role.value === draft.role) ?? roles[3];
 
   const submit = async (event: FormEvent) => {
@@ -48,9 +50,12 @@ export function UserForm({
             ...(draft.password ? { password: draft.password } : {}),
           })
         : await createOrganizationUser(draft);
+      showNotice("success", user ? "User details updated successfully." : "User created successfully.");
       onSaved(saved);
     } catch {
-      setError("Could not save this user. Check the fields and try again.");
+      const message = "Could not save this user. Check the fields and try again.";
+      setError(message);
+      showNotice("error", message);
     } finally {
       setBusy(false);
     }

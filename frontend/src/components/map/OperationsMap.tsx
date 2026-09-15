@@ -12,7 +12,6 @@ import {
 import type { Map as MlMap } from "maplibre-gl";
 
 import { fetchTracks } from "@/services/api";
-import { connectTracking } from "@/services/realtime";
 import { useTrackingStore } from "@/stores/tracking-store";
 
 import {
@@ -123,10 +122,6 @@ export function OperationsMap() {
   useEffect(() => {
     let cancelled = false;
 
-    let disconnectTracking:
-      | (() => void)
-      | undefined;
-
     let cleanupMapListeners:
       | (() => void)
       | undefined;
@@ -188,27 +183,6 @@ export function OperationsMap() {
          * the RTL plugin was being initialized.
          */
         if (cancelled || !el.current) {
-          return;
-        }
-
-        /**
-         * Connect Laravel Reverb / Echo.
-         */
-        try {
-          disconnectTracking =
-            connectTracking();
-        } catch (error) {
-          console.error(
-            "Failed to connect tracking:",
-            error,
-          );
-        }
-
-        /**
-         * Make sure the component is still mounted.
-         */
-        if (cancelled || !el.current) {
-          disconnectTracking?.();
           return;
         }
 
@@ -346,18 +320,6 @@ export function OperationsMap() {
        * Remove event listeners.
        */
       cleanupMapListeners?.();
-
-      /**
-       * Disconnect Laravel Reverb / Echo.
-       */
-      try {
-        disconnectTracking?.();
-      } catch (error) {
-        console.warn(
-          "Failed to disconnect tracking:",
-          error,
-        );
-      }
 
       /**
        * Destroy MapLibre.

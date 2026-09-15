@@ -14,9 +14,9 @@ final readonly class OrganizationUserService
 {
     public function __construct(private OrganizationUserRepository $users) {}
 
-    public function paginate(Organization $organization, int $perPage = 25, ?string $search = null, ?string $role = null): LengthAwarePaginator
+    public function paginate(Organization $organization, int $perPage = 25, ?string $search = null, ?string $role = null, string $sort = 'name', string $direction = 'asc'): LengthAwarePaginator
     {
-        return $this->users->paginate($organization, $perPage, $search, $role);
+        return $this->users->paginate($organization, $perPage, $search, $role, $sort, $direction);
     }
 
     public function create(Organization $organization, array $attributes): User

@@ -26,6 +26,9 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/user', [AuthController::class, 'user']);
         Route::middleware('permission:users.manage')->get('auth/roles', [RoleController::class, 'index']);
+        Route::middleware('permission:users.manage')->post('auth/roles', [RoleController::class, 'store']);
+        Route::middleware('permission:users.manage')->put('auth/roles/{role}', [RoleController::class, 'update']);
+        Route::middleware('permission:users.manage')->delete('auth/roles/{role}', [RoleController::class, 'destroy']);
         Route::middleware('permission:tracks.view')->group(function () {
             Route::get('tracks', [TrackController::class, 'index']);
             Route::get('tracks/{track}', [TrackController::class, 'show']);

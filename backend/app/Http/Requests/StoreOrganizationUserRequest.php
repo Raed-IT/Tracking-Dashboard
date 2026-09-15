@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Domain\Access\Enums\OrganizationRole;
+use App\Models\Role;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +22,10 @@ final class StoreOrganizationUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:10', 'max:255'],
-            'role' => ['required', Rule::enum(OrganizationRole::class)],
+            'role' => ['required', 'string', 'max:255', Rule::in(array_merge(
+                array_map(static fn (OrganizationRole $role): string => $role->value, OrganizationRole::cases()),
+                Role::allowedValues(),
+            ))],
         ];
     }
 }

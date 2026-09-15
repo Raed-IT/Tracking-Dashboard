@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Access\Enums\OrganizationRole;
+use App\Models\RolePermission;
 use Database\Factories\UserFactory;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -48,7 +49,10 @@ use Laravel\Sanctum\HasApiTokens;
     public function permissions(): array
     {
         return $this->organizations
-            ->map(fn (Organization $organization) => OrganizationRole::tryFrom((string) $organization->pivot->role)?->permissions() ?? [])
+            ->map(fn (Organization $organization) => RolePermission::query()
+                ->where('role', (string) $organization->pivot->role)
+                ->pluck('permission')
+                ->all())
             ->flatten()->unique()->values()->all();
     }
 

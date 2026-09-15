@@ -94,6 +94,7 @@ export function RightPanel({
   const tracks = useTrackingStore((s) => s.tracks),
     id = useTrackingStore((s) => s.selectedId),
     t = id ? tracks.get(id) : undefined;
+  const canManageAlerts = useAuthStore((s) => s.can("alerts.manage"));
   const acknowledge = async (id: string) => {
     await acknowledgeAlert(id);
     setAlerts((cur) => cur.filter((a) => a.id !== id));
@@ -122,13 +123,15 @@ export function RightPanel({
             <p className="mt-1 text-[10px] leading-4 text-slate-600">
               {a.message}
             </p>
-            <button
-              onClick={() => void acknowledge(a.id)}
-              className="mt-3 inline-flex items-center gap-1 text-[9px] font-bold text-cyan-300"
-            >
-              <Check size={12} />
-              Acknowledge
-            </button>
+            {canManageAlerts && (
+              <button
+                onClick={() => void acknowledge(a.id)}
+                className="mt-3 inline-flex items-center gap-1 text-[9px] font-bold text-cyan-300"
+              >
+                <Check size={12} />
+                Acknowledge
+              </button>
+            )}
           </article>
         ))}
         {alerts.length === 0 && (

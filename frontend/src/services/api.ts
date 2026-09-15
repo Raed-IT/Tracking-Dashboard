@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { DataSource, OperatorAlert, Track } from "@/types/tracking";
-import type { AuthenticatedUser, OrganizationUser, Role, RoleDefinition } from "@/types/auth";
+import type { AuthenticatedUser, OrganizationUser, Permission, PermissionDefinition, Role, RoleDefinition } from "@/types/auth";
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost/api/v1",
   headers: { Accept: "application/json" },
@@ -67,6 +67,26 @@ export async function fetchRoleDefinitions(): Promise<RoleDefinition[]> {
   const { data } = await api.get<{ data: RoleDefinition[] }>("/auth/roles");
   return data.data;
 }
+export async function fetchRolePolicy(): Promise<{
+  roles: RoleDefinition[];
+  permissions: PermissionDefinition[];
+}> {
+  const { data } = await api.get<{
+    data: RoleDefinition[];
+    permission_definitions: PermissionDefinition[];
+  }>("/auth/roles");
+  return { roles: data.data, permissions: data.permission_definitions };
+}
+export async function updateRolePermissions(
+  role: Role,
+  permissions: Permission[],
+): Promise<RoleDefinition[]> {
+  const { data } = await api.put<{ data: RoleDefinition[] }>(
+    `/auth/roles/${role}`,
+    { permissions },
+  );
+  return data.data;
+}
 export async function fetchOrganizationUsers(
   filters: {
     search?: string;
@@ -87,6 +107,22 @@ export async function fetchOrganizationUsers(
     },
   );
   return data.data;
+}
+export async function fetchOrganizationUsersPage(filters: {
+  search?: string;
+  role?: Role;
+  page?: number;
+  perPage?: number;
+  sort?: "name" | "email" | "role" | "created_at";
+  direction?: "asc" | "desc";
+} = {}): Promise<{ users: OrganizationUser[]; total: number; lastPage: number }> {
+  const { data } = await api.get<{
+    data: OrganizationUser[];
+    meta: { total: number; last_page: number };
+  }>("/organization/users", {
+    params: { ...filters, per_page: filters.perPage ?? 25 },
+  });
+  return { users: data.data, total: data.meta.total, lastPage: data.meta.last_page };
 }
 export async function createOrganizationUser(input: {
   name: string;
