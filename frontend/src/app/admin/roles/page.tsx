@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, Minus, Save, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Check, Minus, Plus, Save, ShieldCheck, Trash2 } from "lucide-react";
 
 import { AuthGate } from "@/components/auth/AuthGate";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { OperationsDrawer } from "@/components/navigation/OperationsDrawer";
-import { fetchRolePolicy, updateRolePermissions } from "@/services/api";
+import {
+  createRoleDefinition,
+  deleteRoleDefinition,
+  fetchRolePolicy,
+  updateRolePermissions,
+} from "@/services/api";
 import type { Permission, PermissionDefinition, RoleDefinition } from "@/types/auth";
 import { useNoticeStore } from "@/stores/notice-store";
 
@@ -16,6 +21,10 @@ export default function RolesPage() {
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [draftDescription, setDraftDescription] = useState("");
+  const [draftPermissions, setDraftPermissions] = useState<Permission[]>(["dashboard.view", "tracks.view"]);
   const showNotice = useNoticeStore((state) => state.show);
 
   useEffect(() => {
@@ -27,6 +36,18 @@ export default function RolesPage() {
       .catch(() => setError(true));
   }, []);
 
+  const permissions = useMemo(
+    () => permissionDefinitions.length > 0
+      ? permissionDefinitions
+      : Array.from(new Set(roles.flatMap((role) => role.permissions))).map((value) => ({
+          value,
+          label: value,
+          description: "",
+          category: "Access",
+        })),
+    [permissionDefinitions, roles],
+  );
+
   const togglePermission = (roleValue: RoleDefinition["value"], permission: Permission) => {
     setRoles((current) => current.map((role) => role.value !== roleValue ? role : {
       ...role,
@@ -35,6 +56,12 @@ export default function RolesPage() {
         : [...role.permissions, permission],
     }));
     setSaved(null);
+  };
+
+  const toggleDraftPermission = (permission: Permission) => {
+    setDraftPermissions((current) => current.includes(permission)
+      ? current.filter((value) => value !== permission)
+      : [...current, permission]);
   };
 
   const saveRole = async (role: RoleDefinition) => {
@@ -53,14 +80,52 @@ export default function RolesPage() {
     }
   };
 
-  const permissions = permissionDefinitions.length > 0
-    ? permissionDefinitions
-    : Array.from(new Set(roles.flatMap((role) => role.permissions))).map((value) => ({
-        value,
-        label: value,
-        description: "",
-        category: "Access",
-      }));
+  const createRole = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = draftName.trim();
+
+    if (!name || draftPermissions.length === 0) {
+      showNotice("error", "Provide a role name and at least one permission.");
+      return;
+    }
+
+    setCreating(true);
+    setError(false);
+
+    try {
+      const next = await createRoleDefinition({
+        name,
+        description: draftDescription.trim() || undefined,
+        permissions: draftPermissions,
+      });
+      setRoles(next);
+      setDraftName("");
+      setDraftDescription("");
+      setDraftPermissions(["dashboard.view", "tracks.view"]);
+      showNotice("success", `${name} created successfully.`);
+    } catch {
+      setError(true);
+      showNotice("error", "Unable to create the role.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const deleteRole = async (role: RoleDefinition) => {
+    if (role.is_system) {
+      showNotice("error", "Built-in roles cannot be deleted.");
+      return;
+    }
+
+    try {
+      const next = await deleteRoleDefinition(role.value);
+      setRoles(next);
+      showNotice("success", `${role.label} deleted successfully.`);
+    } catch {
+      setError(true);
+      showNotice("error", `Unable to delete ${role.label}.`);
+    }
+  };
 
   return (
     <AuthGate>
@@ -90,11 +155,77 @@ export default function RolesPage() {
                       <strong className="text-2xl text-slate-900 dark:text-white">{role.permissions.length}</strong>
                     </div>
                     <h2 className="mt-4 text-sm font-semibold text-slate-900 dark:text-white">{role.label}</h2>
-                    <p className="mt-1 text-xs text-slate-500">Granted capabilities</p>
+                    <p className="mt-1 text-xs text-slate-500">{role.is_system ? "Built-in capability set" : "Custom capability set"}</p>
+                    {!role.is_system && (
+                      <button
+                        type="button"
+                        onClick={() => void deleteRole(role)}
+                        className="mt-3 inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"
+                      >
+                        <Trash2 size={11} /> Delete
+                      </button>
+                    )}
                   </article>
                 ))}
               </section>
             )}
+
+            <form onSubmit={createRole} className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/[.07] dark:bg-slate-900/70">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-cyan-600 dark:text-cyan-300">
+                <Plus size={12} />
+                Create role
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_1.6fr]">
+                <label className="block">
+                  <span className="mb-2 block text-xs font-medium text-slate-500">Role name</span>
+                  <input
+                    value={draftName}
+                    onChange={(event) => setDraftName(event.target.value)}
+                    placeholder="e.g. analyst"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-cyan-400 dark:border-white/[.08] dark:bg-slate-950/80 dark:text-white"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-xs font-medium text-slate-500">Description</span>
+                  <input
+                    value={draftDescription}
+                    onChange={(event) => setDraftDescription(event.target.value)}
+                    placeholder="Track oversight and alert response"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-cyan-400 dark:border-white/[.08] dark:bg-slate-950/80 dark:text-white"
+                  />
+                </label>
+              </div>
+              <div className="mt-4">
+                <span className="mb-2 block text-xs font-medium text-slate-500">Permissions</span>
+                <div className="flex flex-wrap gap-2">
+                  {permissions.map((permission) => (
+                    <button
+                      key={permission.value}
+                      type="button"
+                      onClick={() => toggleDraftPermission(permission.value)}
+                      className={[
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                        draftPermissions.includes(permission.value)
+                          ? "border-cyan-400 bg-cyan-400/10 text-cyan-700 dark:border-cyan-300/40 dark:text-cyan-300"
+                          : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 dark:border-white/[.08] dark:bg-slate-950/80 dark:text-slate-300",
+                      ].join(" ")}
+                    >
+                      {permission.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-4 flex items-center justify-end">
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Plus size={14} />
+                  {creating ? "Creating..." : "Create role"}
+                </button>
+              </div>
+            </form>
 
             {error ? (
               <p className="rounded-xl border border-rose-400/20 p-4 text-sm text-rose-500">

@@ -77,6 +77,17 @@ export async function fetchRolePolicy(): Promise<{
   }>("/auth/roles");
   return { roles: data.data, permissions: data.permission_definitions };
 }
+export async function createRoleDefinition(input: {
+  name: string;
+  description?: string;
+  permissions: Permission[];
+}): Promise<RoleDefinition[]> {
+  const { data } = await api.post<{ data: RoleDefinition[] }>(
+    "/auth/roles",
+    input,
+  );
+  return data.data;
+}
 export async function updateRolePermissions(
   role: Role,
   permissions: Permission[],
@@ -84,6 +95,26 @@ export async function updateRolePermissions(
   const { data } = await api.put<{ data: RoleDefinition[] }>(
     `/auth/roles/${role}`,
     { permissions },
+  );
+  return data.data;
+}
+export async function updateRoleDefinition(
+  role: Role,
+  input: {
+    name?: string;
+    description?: string;
+    permissions?: Permission[];
+  },
+): Promise<RoleDefinition[]> {
+  const { data } = await api.put<{ data: RoleDefinition[] }>(
+    `/auth/roles/${role}`,
+    input,
+  );
+  return data.data;
+}
+export async function deleteRoleDefinition(role: Role): Promise<RoleDefinition[]> {
+  const { data } = await api.delete<{ data: RoleDefinition[] }>(
+    `/auth/roles/${role}`,
   );
   return data.data;
 }
