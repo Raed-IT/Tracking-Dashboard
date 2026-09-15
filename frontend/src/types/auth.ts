@@ -1,4 +1,5 @@
-export type Role = "superadmin" | "operator" | "viewer";
+export type BuiltinRole = "superadmin" | "operator" | "viewer";
+export type Role = BuiltinRole | (string & {});
 export type Permission = "tracks.view" | "sources.view" | "sources.manage" | "alerts.view" | "alerts.manage" | "geofences.view" | "geofences.manage" | "dashboard.view" | "dashboard.manage" | "users.manage";
 export interface PermissionDefinition {value:Permission;label:string;description:string;category:string}
 export interface RoleDefinition {id?: string | number; value:Role; label:string; permissions:Permission[]; description?: string; is_system?: boolean}

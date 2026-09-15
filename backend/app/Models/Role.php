@@ -26,10 +26,20 @@ final class Role extends Model
     /** @return list<string> */
     public static function allowedValues(): array
     {
-        return array_values(array_unique(array_map(
+        $values = array_map(
             static fn (OrganizationRole $role): string => $role->value,
             OrganizationRole::cases(),
+        );
+
+        return array_values(array_unique(array_merge(
+            $values,
+            self::query()->pluck('slug')->all(),
         )));
+    }
+
+    public function permissions()
+    {
+        return $this->hasMany(RolePermission::class, 'role', 'slug');
     }
 
     public function users()

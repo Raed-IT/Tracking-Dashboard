@@ -16,6 +16,7 @@ import {
   Search,
   Settings,
   ShieldAlert,
+  ShieldCheck,
   Users,
   X,
   Moon,
@@ -65,6 +66,12 @@ const nav = [
     href: "/admin/users",
     label: "Users",
     icon: Users,
+    permission: "users.manage" as const,
+  },
+  {
+    href: "/admin/roles",
+    label: "Roles",
+    icon: ShieldCheck,
     permission: "users.manage" as const,
   },
   {
