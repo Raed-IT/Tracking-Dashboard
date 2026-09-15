@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Alerts\Models;
 
+use App\Domain\Alerts\Events\AlertCreated;
 use App\Domain\Tracking\Models\Track;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -15,6 +16,13 @@ final class Alert extends Model
     use HasUuids;
 
     protected $guarded = [];
+
+    protected static function booted(): void
+    {
+        static::created(static function (self $alert): void {
+            event(new AlertCreated($alert));
+        });
+    }
 
     public function uniqueIds(): array
     {

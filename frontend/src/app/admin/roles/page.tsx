@@ -186,7 +186,7 @@ export default function RolesPage() {
   return (
     <AuthGate>
       <OperationsDrawer>
-        <PermissionGate permission="users.manage" fallback={<main className="grid min-h-[70vh] place-items-center p-6 text-center"><div><h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Access denied</h1><p className="mt-2 text-sm text-slate-500">Administrator permission is required.</p></div></main>}>
+        <PermissionGate permission="users.manage" fallback={<main className="grid min-h-[70vh] place-items-center p-6 text-center"><div><h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Access denied</h1><p className="mt-2 text-sm text-slate-500">User management permission is required.</p></div></main>}>
           <main className="mx-auto max-w-7xl p-4 sm:p-6 xl:p-8">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>

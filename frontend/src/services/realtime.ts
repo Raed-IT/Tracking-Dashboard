@@ -1,5 +1,6 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
+import type { AlertSeverity, OperatorAlert } from "@/types/tracking";
 
 declare global {
     interface Window {
@@ -9,11 +10,47 @@ declare global {
 
 type ReverbCallbacks = {
     onMessage?: (data: { message: string }) => void;
+    onAlert?: (data: { alert: RealtimeAlert }) => void;
     onEvent?: (eventName: string, data: unknown) => void;
     onStatus?: (status: RealtimeStatus) => void;
 };
 
 export type RealtimeStatus = "connecting" | "connected" | "disconnected";
+export type RealtimeAlert = {
+    id: string;
+    severity: AlertSeverity;
+    state: OperatorAlert["state"];
+    title: string;
+    message: string | null;
+    created_at: string | null;
+};
+
+let alertAudioContext: AudioContext | undefined;
+
+export function playAlertSound(volume: number): void {
+    if (volume <= 0 || typeof window === "undefined" || !window.AudioContext) {
+        return;
+    }
+
+    alertAudioContext ??= new window.AudioContext();
+    const context = alertAudioContext;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const now = context.currentTime;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(740, now);
+    oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.16);
+    gain.gain.setValueAtTime(volume * 0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.16);
+    void context.resume().catch((error: unknown) => {
+        console.warn("Alert sound could not play until the browser allows audio:", error);
+    });
+}
 
 export function connectTracking(
     callbacks: ReverbCallbacks = {}
@@ -104,6 +141,11 @@ export function connectTracking(
                callbacks.onMessage?.(data);
            });
 
+           const alertsChannel = echo.channel("alerts");
+           alertsChannel.listen(".alert.created", (data: { alert: RealtimeAlert }) => {
+               callbacks.onAlert?.(data);
+           });
+
            const pusherChannel = (channel as {
                subscription?: {
                    bind_global: (callback: (eventName: string, data: unknown) => void) => void;
@@ -129,6 +171,7 @@ export function connectTracking(
            clearTimeout(retryTimer);
         }
         echo?.leave("test-channel");
+        echo?.leave("alerts");
         echo?.disconnect();
         callbacks.onStatus?.("disconnected");
     };

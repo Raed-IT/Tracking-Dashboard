@@ -28,7 +28,7 @@ enum OrganizationRole: string
         $normalized = strtolower(str_replace(['-', '_', ' '], '', trim($role)));
 
         return match ($normalized) {
-            'admin', 'administrator', 'superadmin' => self::Superadmin->value,
+            'superadmin' => self::Superadmin->value,
             'supervisor' => self::Operator->value,
             default => $role,
         };

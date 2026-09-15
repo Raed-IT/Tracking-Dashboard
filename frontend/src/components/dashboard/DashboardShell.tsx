@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   Activity,
   Bell,
@@ -22,7 +21,6 @@ import { PermissionGate } from "@/components/auth/PermissionGate";
 import { OperationsDrawer } from "@/components/navigation/OperationsDrawer";
 import { useDashboardController } from "@/controllers/useDashboardController";
 import { PageHeader } from "@/components/ui/Page";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useRealtimeStore } from "@/stores/realtime-store";
 
@@ -108,7 +106,7 @@ function SecuredDashboard() {
         ))}
       </section>
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="mt-4">
         <section
           className={[
             "relative overflow-hidden border shadow-2xl transition-all duration-300",
@@ -172,58 +170,6 @@ function SecuredDashboard() {
           </div>
         </section>
 
-        {!fullscreen && (
-          <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/[.07] dark:bg-slate-900/70">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-white/[.06]">
-              <div>
-                <div className="text-[9px] font-bold uppercase tracking-[.18em] text-amber-500 dark:text-amber-300">
-                  {t.dashboard.priorityQueue}
-                </div>
-                <h2 className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                  {t.dashboard.activeIncidents}
-                </h2>
-              </div>
-              <Link
-                href="/alerts"
-                className="text-[11px] text-cyan-600 hover:text-cyan-500 dark:text-cyan-300 dark:hover:text-cyan-200"
-              >
-                {t.dashboard.viewAll}
-              </Link>
-            </div>
-
-            <div className="divide-y divide-slate-100 dark:divide-white/[.05]">
-              {dashboard.alerts.slice(0, 6).map((alert) => (
-                <article
-                  className="p-4 transition hover:bg-slate-50 dark:hover:bg-white/[.02]"
-                  key={alert.id}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <strong className="text-sm text-slate-800 dark:text-slate-200">
-                      {alert.title}
-                    </strong>
-                    <StatusBadge status={alert.severity} />
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
-                    {alert.message ?? t.dashboard.unlinkedTarget}
-                  </p>
-                  <div className="mt-3 text-[10px] text-slate-400 dark:text-slate-600">
-                    {new Date(alert.created_at).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    · {alert.track?.callsign ?? t.dashboard.unlinkedTarget}
-                  </div>
-                </article>
-              ))}
-
-              {dashboard.alerts.length === 0 && (
-                <div className="flex min-h-48 items-center justify-center px-5 text-center text-xs text-slate-500">
-                  {t.common.noAlerts}
-                </div>
-              )}
-            </div>
-          </aside>
-        )}
       </section>
 
       {!fullscreen && (

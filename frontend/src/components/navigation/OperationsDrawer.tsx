@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/Button";
 import { useAppPreferences } from "@/components/providers/AppPreferences";
 import { useTranslation } from "@/hooks/useTranslation";
 import { NoticeHost } from "@/components/ui/NoticeHost";
+import { useRealtimeAlertStore } from "@/stores/realtime-alert-store";
 
 const nav = [
   {
@@ -94,6 +95,7 @@ export function OperationsDrawer({
   const logout = useAuthStore((state) => state.logout);
   const realtimeStatus = useRealtimeStore((state) => state.status);
   const showNotice = useNoticeStore((state) => state.show);
+  const realtimeAlerts = useRealtimeAlertStore((state) => state.alerts);
 
   const { language, theme, toggleLanguage, toggleTheme } = useAppPreferences();
   const { t } = useTranslation();
@@ -381,8 +383,15 @@ export function OperationsDrawer({
               size="icon"
               variant="ghost"
               aria-label={t.common.notifications}
+              className="relative"
+              onClick={() => router.push("/alerts")}
             >
               <Bell size={17} />
+              {realtimeAlerts.length > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                  {realtimeAlerts.length > 9 ? "9+" : realtimeAlerts.length}
+                </span>
+              )}
             </Button>
 
             <span

@@ -15,8 +15,10 @@ type Theme = "dark" | "light";
 type Preferences = {
   language: Language;
   theme: Theme;
+  alertVolume: number;
   setLanguage: (language: Language) => void;
   setTheme: (theme: Theme) => void;
+  setAlertVolume: (volume: number) => void;
   toggleLanguage: () => void;
   toggleTheme: () => void;
 };
@@ -44,6 +46,7 @@ function applyPreferences(language: Language, theme: Theme) {
 export function AppPreferences({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
   const [theme, setThemeState] = useState<Theme>("dark");
+  const [alertVolume, setAlertVolumeState] = useState(0.5);
 
   useEffect(() => {
     const savedLanguage = window.localStorage.getItem(
@@ -53,6 +56,10 @@ export function AppPreferences({ children }: { children: ReactNode }) {
     const savedTheme = window.localStorage.getItem(
       "fusionops-theme",
     ) as Theme | null;
+    const savedAlertVolumeValue = window.localStorage.getItem("fusionops-alert-volume");
+    const savedAlertVolume = savedAlertVolumeValue === null
+      ? Number.NaN
+      : Number(savedAlertVolumeValue);
 
     const nextLanguage =
       savedLanguage === "ar" || savedLanguage === "en"
@@ -66,6 +73,9 @@ export function AppPreferences({ children }: { children: ReactNode }) {
 
     setLanguageState(nextLanguage);
     setThemeState(nextTheme);
+    if (Number.isFinite(savedAlertVolume) && savedAlertVolume >= 0 && savedAlertVolume <= 1) {
+      setAlertVolumeState(savedAlertVolume);
+    }
     applyPreferences(nextLanguage, nextTheme);
   }, []);
 
@@ -77,6 +87,7 @@ export function AppPreferences({ children }: { children: ReactNode }) {
     () => ({
       language,
       theme,
+      alertVolume,
 
       setLanguage: (value) => {
         setLanguageState(value);
@@ -86,6 +97,11 @@ export function AppPreferences({ children }: { children: ReactNode }) {
       setTheme: (value) => {
         setThemeState(value);
         window.localStorage.setItem("fusionops-theme", value);
+      },
+      setAlertVolume: (value) => {
+        const next = Math.min(1, Math.max(0, value));
+        setAlertVolumeState(next);
+        window.localStorage.setItem("fusionops-alert-volume", String(next));
       },
 
       toggleLanguage: () => {
@@ -104,7 +120,7 @@ export function AppPreferences({ children }: { children: ReactNode }) {
         });
       },
     }),
-    [language, theme],
+    [alertVolume, language, theme],
   );
 
   return (
