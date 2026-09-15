@@ -68,12 +68,6 @@ const nav = [
     permission: "users.manage" as const,
   },
   {
-    href: "/admin/roles",
-    label: "Roles & permissions",
-    icon: ShieldAlert,
-    permission: "users.manage" as const,
-  },
-  {
     href: "/settings",
     label: "Settings",
     icon: Settings,

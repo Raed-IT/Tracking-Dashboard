@@ -12,9 +12,9 @@ final class OrganizationRoleTest extends TestCase
 {
     public function test_roles_receive_only_their_expected_management_permissions(): void
     {
-        $this->assertContains('users.manage', OrganizationRole::Administrator->permissions());
+        $this->assertContains('users.manage', OrganizationRole::Superadmin->permissions());
         $this->assertContains('alerts.manage', OrganizationRole::Operator->permissions());
-        $this->assertNotContains('sources.manage', OrganizationRole::Viewer->permissions());
+        $this->assertNotContains('users.manage', OrganizationRole::Viewer->permissions());
         $this->assertContains('tracks.view', OrganizationRole::Viewer->permissions());
     }
 

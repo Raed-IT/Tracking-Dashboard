@@ -13,8 +13,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(['email' => 'admin@example.com'], ['name' => 'Administrator', 'password' => 'change-me', 'role' => 'administrator']);
-        User::updateOrCreate(['email' => 'superadmin@test.com'], ['name' => 'Super Administrator', 'password' => '123456', 'role' => 'superadmin']);
+        User::updateOrCreate(['email' => 'superadmin@test.com'], ['name' => 'Super admin', 'password' => '123456', 'role' => 'superadmin']);
+        User::updateOrCreate(['email' => 'operator@test.com'], ['name' => 'Operator', 'password' => '123456', 'role' => 'operator']);
+        User::updateOrCreate(['email' => 'viewer@test.com'], ['name' => 'Viewer', 'password' => '123456', 'role' => 'viewer']);
         DataSource::firstOrCreate(['slug' => 'mock-aircraft'], ['name' => 'Mock Aircraft Stream', 'type' => 'aircraft', 'driver' => 'mock_aircraft', 'enabled' => true, 'status' => 'online', 'health_metadata' => ['mode' => 'simulation']]);
         DataSource::firstOrCreate(['slug' => 'flightradar24'], ['name' => 'Flightradar24', 'type' => 'aircraft', 'driver' => 'flightradar24', 'enabled' => false, 'status' => 'offline', 'health_metadata' => ['reason' => 'FR24_API_KEY is not configured']]);
         Alert::firstOrCreate(['title' => 'Low-altitude aircraft detected'], ['severity' => 'high', 'state' => 'active', 'message' => 'Aircraft entered the monitored area below the configured altitude threshold.', 'metadata' => ['source' => 'mock-aircraft']]);

@@ -26,12 +26,9 @@ final class Role extends Model
     /** @return list<string> */
     public static function allowedValues(): array
     {
-        $canonical = array_map(static fn (OrganizationRole $role): string => $role->value, OrganizationRole::cases());
-
-        return array_values(array_unique(array_merge(
-            $canonical,
-            ['super-admin', 'super_admin'],
-            self::query()->pluck('slug')->all(),
+        return array_values(array_unique(array_map(
+            static fn (OrganizationRole $role): string => $role->value,
+            OrganizationRole::cases(),
         )));
     }
 

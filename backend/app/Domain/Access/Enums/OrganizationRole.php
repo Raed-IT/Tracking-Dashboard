@@ -6,9 +6,7 @@ namespace App\Domain\Access\Enums;
 
 enum OrganizationRole: string
 {
-    case Administrator = 'administrator';
     case Superadmin = 'superadmin';
-    case Supervisor = 'supervisor';
     case Operator = 'operator';
     case Viewer = 'viewer';
 
@@ -27,10 +25,11 @@ enum OrganizationRole: string
 
     public static function canonical(string $role): string
     {
-        $normalized = strtolower(str_replace(['-', '_'], '', trim($role)));
+        $normalized = strtolower(str_replace(['-', '_', ' '], '', trim($role)));
 
         return match ($normalized) {
-            'superadmin' => self::Administrator->value,
+            'admin', 'administrator', 'superadmin' => self::Superadmin->value,
+            'supervisor' => self::Operator->value,
             default => $role,
         };
     }
@@ -39,7 +38,8 @@ enum OrganizationRole: string
     {
         return match ($this) {
             self::Superadmin => 'Super admin',
-            default => ucfirst($this->value),
+            self::Operator => 'Operator',
+            self::Viewer => 'Viewer',
         };
     }
 
@@ -47,17 +47,7 @@ enum OrganizationRole: string
     public function permissions(): array
     {
         return match ($this) {
-            self::Administrator, self::Superadmin => Permission::values(),
-            self::Supervisor => [
-                Permission::TracksView->value,
-                Permission::SourcesView->value,
-                Permission::AlertsView->value,
-                Permission::AlertsManage->value,
-                Permission::GeofencesView->value,
-                Permission::GeofencesManage->value,
-                Permission::DashboardView->value,
-                Permission::DashboardManage->value,
-            ],
+            self::Superadmin => Permission::values(),
             self::Operator => [
                 Permission::TracksView->value,
                 Permission::SourcesView->value,

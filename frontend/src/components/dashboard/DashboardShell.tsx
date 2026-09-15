@@ -271,7 +271,7 @@ export function DashboardShell() {
             <main className="grid min-h-[70vh] place-items-center p-6 text-center">
               <div>
                 <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Dashboard access is restricted</h1>
-                <p className="mt-2 text-sm text-slate-500">Ask an administrator to grant dashboard.view.</p>
+                <p className="mt-2 text-sm text-slate-500">Ask a Super admin to grant dashboard.view.</p>
               </div>
             </main>
           }

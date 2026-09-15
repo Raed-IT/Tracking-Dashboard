@@ -11,7 +11,7 @@ export const pageText: Record<Language, {
     tracks: { title: "Live tracks", description: "Monitor aircraft positions and telemetry in real time." },
     sources: { title: "Data sources", description: "Manage connected ADS-B and telemetry feeds." },
     alerts: { title: "Alerts", description: "Review operational events and flight anomalies." },
-    users: { title: "Users", description: "Manage operators, roles and access." },
+    users: { title: "Users", description: "Manage operators and access." },
     settings: { title: "Settings", description: "Configure workspace and application preferences." },
   },
   ar: {

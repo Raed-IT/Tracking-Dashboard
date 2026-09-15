@@ -28,28 +28,7 @@ final class RoleController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'min:2', 'max:80', Rule::unique('roles', 'name')],
-            'description' => ['nullable', 'string', 'max:500'],
-            'permissions' => ['required', 'array', 'min:1'],
-            'permissions.*' => ['string', 'in:'.implode(',', Permission::values())],
-        ]);
-
-        $slug = $this->slugifyRoleName((string) $validated['name']);
-        abort_if(OrganizationRole::tryFrom($slug) !== null || Role::query()->where('slug', $slug)->exists(), 422, 'Role already exists.');
-
-        $role = DB::transaction(function () use ($validated, $slug): Role {
-            return Role::query()->create([
-                'name' => trim((string) $validated['name']),
-                'slug' => $slug,
-                'description' => $validated['description'] ?? null,
-                'is_system' => false,
-            ]);
-        });
-
-        $this->syncPermissions($role->slug, $validated['permissions']);
-
-        return response()->json(['data' => $this->definitions()], 201);
+        abort(422, 'Custom roles are disabled. Only Super admin, Operator, and Viewer are supported.');
     }
 
     public function update(Request $request, string $role): JsonResponse
@@ -61,63 +40,23 @@ final class RoleController extends Controller
             'permissions.*' => ['string', 'in:'.implode(',', Permission::values())],
         ]);
 
-        if (OrganizationRole::tryFrom($role) !== null) {
-            $rolePermissions = RolePermission::query()
-                ->whereIn('role', array_values(array_unique([$role, OrganizationRole::canonical($role)])))
-                ->pluck('permission')
-                ->all();
-
-            $this->syncPermissions($role, $validated['permissions'] ?? $rolePermissions);
-
-            return response()->json(['data' => $this->definitions()]);
+        if (OrganizationRole::tryFrom($role) === null) {
+            abort(422, 'Custom roles are disabled. Only Super admin, Operator, and Viewer are supported.');
         }
 
-        $record = Role::query()->where('slug', $role)->first();
-        abort_unless($record, 404, 'Unknown role.');
-        $previousSlug = $record->slug;
+        $rolePermissions = RolePermission::query()
+            ->whereIn('role', array_values(array_unique([$role, OrganizationRole::canonical($role)])))
+            ->pluck('permission')
+            ->all();
 
-        if (isset($validated['name'])) {
-            $slug = $this->slugifyRoleName((string) $validated['name']);
-            abort_if(($slug !== $record->slug && (OrganizationRole::tryFrom($slug) !== null || Role::query()->where('slug', $slug)->whereKeyNot($record->getKey())->exists())), 422, 'Role already exists.');
-            $record->name = trim((string) $validated['name']);
-            $record->slug = $slug;
-        }
-
-        if (array_key_exists('description', $validated)) {
-            $record->description = $validated['description'];
-        }
-
-        $record->save();
-
-        if ($previousSlug !== $record->slug) {
-            User::query()
-                ->where('role', $previousSlug)
-                ->update(['role' => $record->slug]);
-            RolePermission::query()
-                ->where('role', $previousSlug)
-                ->update(['role' => $record->slug]);
-        }
-
-        if (array_key_exists('permissions', $validated)) {
-            $this->syncPermissions($record->slug, $validated['permissions']);
-        }
+        $this->syncPermissions($role, $validated['permissions'] ?? $rolePermissions);
 
         return response()->json(['data' => $this->definitions()]);
     }
 
     public function destroy(string $role): JsonResponse
     {
-        $record = Role::query()->where('slug', $role)->first();
-        abort_unless($record, 404, 'Unknown role.');
-        abort_if($record->is_system, 422, 'System roles cannot be deleted.');
-        abort_if($record->users()->exists(), 422, 'Reassign users before deleting this role.');
-
-        DB::transaction(function () use ($record): void {
-            RolePermission::query()->where('role', $record->slug)->delete();
-            $record->delete();
-        });
-
-        return response()->json(['data' => $this->definitions()]);
+        abort(422, 'Custom roles are disabled. Only Super admin, Operator, and Viewer are supported.');
     }
 
     private function syncPermissions(string $role, array $permissions): void
@@ -146,7 +85,7 @@ final class RoleController extends Controller
 
     private function definitions(): array
     {
-        $definitions = array_map(
+        return array_map(
             fn (OrganizationRole $role): array => [
                 'value' => $role->value,
                 'label' => $role->label(),
@@ -156,27 +95,6 @@ final class RoleController extends Controller
             ],
             OrganizationRole::cases(),
         );
-
-        $seen = array_map(static fn (array $role): string => $role['value'], $definitions);
-
-        foreach (Role::query()->orderBy('name')->get() as $role) {
-            if (in_array($role->slug, $seen, true)) {
-                continue;
-            }
-
-            $definitions[] = [
-                'id' => $role->getKey(),
-                'value' => $role->slug,
-                'label' => $role->name,
-                'permissions' => RolePermission::query()->where('role', $role->slug)->pluck('permission')->values()->all(),
-                'description' => $role->description,
-                'is_system' => false,
-            ];
-
-            $seen[] = $role->slug;
-        }
-
-        return $definitions;
     }
 
     private function slugifyRoleName(string $name): string
