@@ -12,9 +12,18 @@ use Illuminate\Support\Str;
 
 final class SourceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return SourceResource::collection(DataSource::where('organization_id', request()->user()->currentOrganizationId())->orderBy('name')->get());
+        $validated = $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        return SourceResource::collection(
+            DataSource::where('organization_id', $request->user()->currentOrganizationId())
+                ->orderBy('name')
+                ->paginate((int) ($validated['per_page'] ?? 25))
+                ->withQueryString(),
+        );
     }
 
     public function show(DataSource $source): SourceResource

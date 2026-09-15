@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\SystemController;
 use App\Http\Controllers\Api\V1\TrackController;
 use App\Http\Controllers\Api\V1\OrganizationUserController;
 use App\Http\Controllers\Api\V1\AlertController;
+use App\Http\Controllers\Api\V1\RoleController;
 use App\Jobs\FetchFlightradar24Aircraft;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/user', [AuthController::class, 'user']);
+        Route::middleware('permission:users.manage')->get('auth/roles', [RoleController::class, 'index']);
         Route::middleware('permission:tracks.view')->group(function () {
             Route::get('tracks', [TrackController::class, 'index']);
             Route::get('tracks/{track}', [TrackController::class, 'show']);

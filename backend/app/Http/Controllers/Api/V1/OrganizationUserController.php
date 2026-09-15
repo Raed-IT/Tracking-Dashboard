@@ -29,7 +29,7 @@ final class OrganizationUserController extends Controller
 
         return OrganizationUserResource::collection($this->users->paginate(
             $request->user()->organizations->firstOrFail(),
-            (int) $validated['per_page'] ?? 10,
+            (int) ($validated['per_page'] ?? 25),
             $validated['search'] ?? null,
             $validated['role'] ?? null,
         ));

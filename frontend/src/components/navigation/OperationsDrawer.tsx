@@ -33,21 +33,25 @@ const nav = [
     href: "/",
     label: "Overview",
     icon: LayoutDashboard,
+    permission: "dashboard.view" as const,
   },
   {
     href: "/tracks",
     label: "Live Tracks",
     icon: RadioTower,
+    permission: "tracks.view" as const,
   },
   {
     href: "/sources",
     label: "Data Sources",
     icon: Database,
+    permission: "sources.view" as const,
   },
   {
     href: "/alerts",
     label: "Alerts",
     icon: ShieldAlert,
+    permission: "alerts.view" as const,
   },
   {
     href: "/health",
@@ -58,6 +62,12 @@ const nav = [
     href: "/admin/users",
     label: "Users",
     icon: Users,
+    permission: "users.manage" as const,
+  },
+  {
+    href: "/admin/roles",
+    label: "Roles & permissions",
+    icon: ShieldAlert,
     permission: "users.manage" as const,
   },
   {

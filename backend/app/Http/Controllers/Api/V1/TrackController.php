@@ -14,7 +14,7 @@ final class TrackController extends Controller
     public function index(TrackIndexRequest $r)
     {
 
-        $q = Track::query();
+        $q = Track::query()->where('organization_id', $r->user()->currentOrganizationId());
             // ->where('last_seen_at', '>=', now()->subMinutes(100));
         foreach (['type', 'classification', 'status'] as $f) {
             if ($r->filled($f)) {

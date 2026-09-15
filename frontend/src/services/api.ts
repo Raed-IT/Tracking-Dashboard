@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { DataSource, OperatorAlert, Track } from "@/types/tracking";
-import type { AuthenticatedUser, OrganizationUser, Role } from "@/types/auth";
+import type { AuthenticatedUser, OrganizationUser, Role, RoleDefinition } from "@/types/auth";
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost/api/v1",
   headers: { Accept: "application/json" },
@@ -19,7 +19,9 @@ export async function fetchTracks(bbox: string): Promise<Track[]> {
   return data.data;
 }
 export async function fetchSources(): Promise<DataSource[]> {
-  const { data } = await api.get<{ data: DataSource[] }>("/sources");
+  const { data } = await api.get<{ data: DataSource[] }>("/sources", {
+    params: { per_page: 100 },
+  });
   return data.data;
 }
 export type CreateSourceInput = {
@@ -59,6 +61,10 @@ export async function logout(): Promise<void> {
 }
 export async function fetchAuthenticatedUser(): Promise<AuthenticatedUser> {
   const { data } = await api.get<{ data: AuthenticatedUser }>("/auth/user");
+  return data.data;
+}
+export async function fetchRoleDefinitions(): Promise<RoleDefinition[]> {
+  const { data } = await api.get<{ data: RoleDefinition[] }>("/auth/roles");
   return data.data;
 }
 export async function fetchOrganizationUsers(
@@ -109,7 +115,7 @@ export async function deleteOrganizationUser(id: string): Promise<void> {
 }
 export async function fetchAlerts(): Promise<OperatorAlert[]> {
   const { data } = await api.get<{ data: OperatorAlert[] }>("/alerts", {
-    params: { state: "active" },
+    params: { state: "active", per_page: 100 },
   });
   return data.data;
 }

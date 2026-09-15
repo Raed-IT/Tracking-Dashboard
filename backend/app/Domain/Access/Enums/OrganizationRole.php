@@ -11,14 +11,54 @@ enum OrganizationRole: string
     case Operator = 'operator';
     case Viewer = 'viewer';
 
+    /** @return list<array{value: string, label: string, permissions: list<string>}> */
+    public static function definitions(): array
+    {
+        return array_map(
+            static fn (self $role): array => [
+                'value' => $role->value,
+                'label' => $role->label(),
+                'permissions' => $role->permissions(),
+            ],
+            self::cases(),
+        );
+    }
+
+    public function label(): string
+    {
+        return ucfirst($this->value);
+    }
+
     /** @return list<string> */
     public function permissions(): array
     {
         return match ($this) {
-            self::Administrator => ['tracks.view', 'sources.view', 'sources.manage', 'alerts.view', 'alerts.manage', 'geofences.view', 'geofences.manage', 'dashboard.view', 'dashboard.manage', 'users.manage'],
-            self::Supervisor => ['tracks.view', 'sources.view', 'alerts.view', 'alerts.manage', 'geofences.view', 'geofences.manage', 'dashboard.view', 'dashboard.manage'],
-            self::Operator => ['tracks.view', 'sources.view', 'alerts.view', 'alerts.manage', 'geofences.view', 'dashboard.view'],
-            self::Viewer => ['tracks.view', 'sources.view', 'alerts.view', 'geofences.view', 'dashboard.view'],
+            self::Administrator => Permission::values(),
+            self::Supervisor => [
+                Permission::TracksView->value,
+                Permission::SourcesView->value,
+                Permission::AlertsView->value,
+                Permission::AlertsManage->value,
+                Permission::GeofencesView->value,
+                Permission::GeofencesManage->value,
+                Permission::DashboardView->value,
+                Permission::DashboardManage->value,
+            ],
+            self::Operator => [
+                Permission::TracksView->value,
+                Permission::SourcesView->value,
+                Permission::AlertsView->value,
+                Permission::AlertsManage->value,
+                Permission::GeofencesView->value,
+                Permission::DashboardView->value,
+            ],
+            self::Viewer => [
+                Permission::TracksView->value,
+                Permission::SourcesView->value,
+                Permission::AlertsView->value,
+                Permission::GeofencesView->value,
+                Permission::DashboardView->value,
+            ],
         };
     }
 }
