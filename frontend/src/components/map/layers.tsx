@@ -1,21 +1,22 @@
 "use client";
 
-import maplibregl, {
-  type GeoJSONSource,
-  type Map as MlMap,
-  type MapLayerMouseEvent,
+import type {
+  GeoJSONSource,
+  Map as MlMap,
+  MapLayerMouseEvent,
 } from "maplibre-gl";
+
 import { useEffect, useRef } from "react";
 
 import { useTrackingStore } from "@/stores/tracking-store";
 
 type LayerProps = {
-  map: React.RefObject<MlMap | null>;
+  map: MlMap;
 };
 
 const MAX_TRAIL_POINTS = 50;
 
-/*
+/**
  * Store aircraft trail positions in browser memory.
  *
  * key   = track ID
@@ -26,7 +27,7 @@ const aircraftTrails = new Map<
   [number, number][]
 >();
 
-/*
+/**
  * Last known position for every aircraft.
  */
 const previousPositions = new Map<
@@ -34,6 +35,9 @@ const previousPositions = new Map<
   [number, number]
 >();
 
+/**
+ * Empty GeoJSON collection.
+ */
 function emptyCollection(): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
@@ -41,8 +45,8 @@ function emptyCollection(): GeoJSON.FeatureCollection {
   };
 }
 
-/*
- * Escape values before putting them into popup HTML.
+/**
+ * Escape values before inserting them into popup HTML.
  */
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
@@ -53,7 +57,7 @@ function escapeHtml(value: unknown): string {
     .replace(/'/g, "&#039;");
 }
 
-/*
+/**
  * Format numbers nicely.
  */
 function formatNumber(
@@ -72,7 +76,7 @@ function formatNumber(
   });
 }
 
-/*
+/**
  * Create airplane SVG icon.
  */
 function createAircraftIcon(): HTMLImageElement {
@@ -89,8 +93,7 @@ function createAircraftIcon(): HTMLImageElement {
           C29.5 2 28 5 27.5 9
           L25.5 25
           L7 34
-          C5.5 35
-          5.5 37.5 7 39
+          C5.5 35 5.5 37.5 7 39
           L25 36.5
           L27 56
           L32 62
@@ -119,7 +122,7 @@ function createAircraftIcon(): HTMLImageElement {
   return image;
 }
 
-/*
+/**
  * Add the airplane image to MapLibre.
  */
 function ensureAircraftIcon(
@@ -135,27 +138,34 @@ function ensureAircraftIcon(
 
   image.onload = () => {
     if (!map.hasImage("aircraft-icon")) {
-      map.addImage(
-        "aircraft-icon",
-        image,
-        {
-          pixelRatio: 2,
-        },
-      );
+      map.addImage("aircraft-icon", image, {
+        pixelRatio: 2,
+      });
     }
 
     callback();
   };
+
+  image.onerror = () => {
+    console.error(
+      "Failed to load aircraft icon.",
+    );
+  };
 }
 
-/*
- * Build small hover tooltip.
+/**
+ * Create hover popup.
+ *
+ * MapLibre is dynamically imported here so this file does not
+ * execute MapLibre runtime code during Next.js module evaluation.
  */
-function createHoverPopup(
-  map: MlMap,
+async function createHoverPopup(
   coordinates: [number, number],
   properties: Record<string, unknown>,
-): maplibregl.Popup {
+) {
+  const { default: maplibregl } =
+    await import("maplibre-gl");
+
   const callsign =
     properties.callsign ||
     "Unknown aircraft";
@@ -164,17 +174,15 @@ function createHoverPopup(
     properties.classification ||
     "Aircraft";
 
-  const altitude =
-    formatNumber(
-      properties.altitude,
-      0,
-    );
+  const altitude = formatNumber(
+    properties.altitude,
+    0,
+  );
 
-  const speed =
-    formatNumber(
-      properties.speed,
-      0,
-    );
+  const speed = formatNumber(
+    properties.speed,
+    0,
+  );
 
   return new maplibregl.Popup({
     closeButton: false,
@@ -249,14 +257,16 @@ function createHoverPopup(
     `);
 }
 
-/*
- * Build detailed click popup.
+/**
+ * Create detailed aircraft popup.
  */
-function createAircraftPopup(
-  map: MlMap,
+async function createAircraftPopup(
   coordinates: [number, number],
   properties: Record<string, unknown>,
-): maplibregl.Popup {
+) {
+  const { default: maplibregl } =
+    await import("maplibre-gl");
+
   const callsign =
     properties.callsign ||
     "Unknown";
@@ -270,41 +280,35 @@ function createAircraftPopup(
     properties.aircraftType ||
     "N/A";
 
-  const altitude =
-    formatNumber(
-      properties.altitude,
-      0,
-    );
+  const altitude = formatNumber(
+    properties.altitude,
+    0,
+  );
 
-  const speed =
-    formatNumber(
-      properties.speed,
-      0,
-    );
+  const speed = formatNumber(
+    properties.speed,
+    0,
+  );
 
-  const heading =
-    formatNumber(
-      properties.heading,
-      0,
-    );
+  const heading = formatNumber(
+    properties.heading,
+    0,
+  );
 
-  const verticalRate =
-    formatNumber(
-      properties.verticalRate,
-      0,
-    );
+  const verticalRate = formatNumber(
+    properties.verticalRate,
+    0,
+  );
 
-  const latitude =
-    formatNumber(
-      properties.latitude,
-      5,
-    );
+  const latitude = formatNumber(
+    properties.latitude,
+    5,
+  );
 
-  const longitude =
-    formatNumber(
-      properties.longitude,
-      5,
-    );
+  const longitude = formatNumber(
+    properties.longitude,
+    5,
+  );
 
   const trackId =
     properties.id ||
@@ -492,10 +496,12 @@ function createAircraftPopup(
           <div style="
             display:flex;
             justify-content:space-between;
+            gap:12px;
             font-size:10px;
             color:#64748b;
           ">
             <span>Position</span>
+
             <span>
               ${latitude}, ${longitude}
             </span>
@@ -504,11 +510,13 @@ function createAircraftPopup(
           <div style="
             display:flex;
             justify-content:space-between;
+            gap:12px;
             margin-top:6px;
             font-size:10px;
             color:#64748b;
           ">
             <span>Track ID</span>
+
             <span>
               ${escapeHtml(trackId)}
             </span>
@@ -517,11 +525,13 @@ function createAircraftPopup(
           <div style="
             display:flex;
             justify-content:space-between;
+            gap:12px;
             margin-top:6px;
             font-size:10px;
             color:#64748b;
           ">
             <span>FR24 ID</span>
+
             <span>
               ${escapeHtml(fr24Id)}
             </span>
@@ -533,27 +543,37 @@ function createAircraftPopup(
     `);
 }
 
+/**
+ * AIRCRAFT
+ */
 export function AircraftLayer({
   map,
 }: LayerProps) {
   const tracks =
-    useTrackingStore((s) => s.tracks);
+    useTrackingStore(
+      (state) => state.tracks,
+    );
 
   const select =
-    useTrackingStore((s) => s.select);
+    useTrackingStore(
+      (state) => state.select,
+    );
 
   const hoverPopup =
     useRef<maplibregl.Popup | null>(null);
 
+  /**
+   * Create/update aircraft sources and layers.
+   */
   useEffect(() => {
-    const m = map.current;
+    const m = map;
 
     if (!m || !m.isStyleLoaded()) {
       return;
     }
 
-    /*
-     * Get aircraft.
+    /**
+     * Only aircraft tracks.
      */
     const aircraft = [
       ...tracks.values(),
@@ -562,47 +582,47 @@ export function AircraftLayer({
         track.type === "aircraft",
     );
 
-    /*
-     * Update aircraft trail history.
+    /**
+     * Update trails.
      */
     for (const track of aircraft) {
       const id = String(track.id);
+
+      const longitude =
+        Number(track.longitude);
+
+      const latitude =
+        Number(track.latitude);
+
+      if (
+        !Number.isFinite(longitude) ||
+        !Number.isFinite(latitude)
+      ) {
+        continue;
+      }
 
       const position: [
         number,
         number,
       ] = [
-        Number(track.longitude),
-        Number(track.latitude),
+        longitude,
+        latitude,
       ];
-
-      if (
-        !Number.isFinite(position[0]) ||
-        !Number.isFinite(position[1])
-      ) {
-        continue;
-      }
 
       const previous =
         previousPositions.get(id);
 
-      /*
-       * Only add a point when aircraft
-       * position has changed.
-       */
       if (
         !previous ||
         previous[0] !== position[0] ||
         previous[1] !== position[1]
       ) {
         const trail =
-          aircraftTrails.get(id) ?? [];
+          aircraftTrails.get(id) ??
+          [];
 
         trail.push(position);
 
-        /*
-         * Keep latest 50 points.
-         */
         while (
           trail.length >
           MAX_TRAIL_POINTS
@@ -622,15 +642,15 @@ export function AircraftLayer({
       }
     }
 
-    /*
-     * Remove trails for aircraft
-     * that are no longer active.
+    /**
+     * Remove stale trails.
      */
-    const activeIds = new Set(
-      aircraft.map((t) =>
-        String(t.id),
-      ),
-    );
+    const activeIds =
+      new Set(
+        aircraft.map((track) =>
+          String(track.id),
+        ),
+      );
 
     for (
       const id of aircraftTrails.keys()
@@ -641,77 +661,107 @@ export function AircraftLayer({
       }
     }
 
-    /*
+    /**
      * Aircraft GeoJSON.
      */
     const aircraftData:
       GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
 
-      features: aircraft.map(
-        (track) => ({
-          type: "Feature",
+      features: aircraft
+        .map((track) => {
+          const longitude =
+            Number(track.longitude);
 
-          geometry: {
-            type: "Point",
+          const latitude =
+            Number(track.latitude);
 
-            coordinates: [
-              Number(track.longitude),
-              Number(track.latitude),
-            ],
-          },
+          if (
+            !Number.isFinite(
+              longitude,
+            ) ||
+            !Number.isFinite(
+              latitude,
+            )
+          ) {
+            return null;
+          }
 
-          properties: {
-            id: String(track.id),
+          return {
+            type: "Feature" as const,
 
-            callsign:
-              track.callsign ?? "",
+            geometry: {
+              type: "Point" as const,
 
-            registration:
-              track.registration ?? "",
+              coordinates: [
+                longitude,
+                latitude,
+              ],
+            },
 
-            classification:
-              track.classification ?? "",
+            properties: {
+              id: String(track.id),
 
-            altitude:
-              Number(
-                track.altitude ?? 0,
-              ),
+              callsign:
+                track.callsign ??
+                "",
 
-            speed:
-              Number(
-                track.speed ?? 0,
-              ),
+              registration:
+                track.registration ??
+                "",
 
-            heading:
-              Number(
-                track.heading ?? 0,
-              ),
+              classification:
+                track.classification ??
+                "",
 
-            verticalRate:
-              Number(
-                track.vertical_rate ?? 0,
-              ),
+              altitude:
+                Number(
+                  track.altitude ??
+                    0,
+                ),
 
-            latitude:
-              Number(track.latitude),
+              speed:
+                Number(
+                  track.speed ??
+                    0,
+                ),
 
-            longitude:
-              Number(track.longitude),
+              heading:
+                Number(
+                  track.heading ??
+                    0,
+                ),
 
-            fr24Id:
-              track.external_identifiers
-                ?.fr24_id ?? "",
+              verticalRate:
+                Number(
+                  track.vertical_rate ??
+                    0,
+                ),
 
-            sourceTrackId:
-              track.external_identifiers
-                ?.fr24_id ?? "",
-          },
-        }),
-      ),
+              latitude,
+
+              longitude,
+
+              /**
+               * These fields are intentionally left
+               * empty because your Track type does not
+               * currently define external_identifiers.
+               */
+              fr24Id: "",
+
+              sourceTrackId: "",
+            },
+          };
+        })
+        .filter(
+          (
+            feature,
+          ): feature is GeoJSON.Feature<GeoJSON.Point> =>
+            feature !== null,
+        ),
     };
 
-    /*
+    /**
      * Aircraft trail GeoJSON.
      */
     const trailData:
@@ -752,11 +802,13 @@ export function AircraftLayer({
         ),
     };
 
-    /*
-     * Create/update aircraft source.
+    /**
+     * Aircraft source.
      */
     const aircraftSource =
-      m.getSource("aircraft") as
+      m.getSource(
+        "aircraft",
+      ) as
         | GeoJSONSource
         | undefined;
 
@@ -771,8 +823,8 @@ export function AircraftLayer({
       });
     }
 
-    /*
-     * Create/update trail source.
+    /**
+     * Trail source.
      */
     const trailSource =
       m.getSource(
@@ -795,8 +847,8 @@ export function AircraftLayer({
       );
     }
 
-    /*
-     * Add trail layer.
+    /**
+     * Trail layer.
      */
     if (
       !m.getLayer(
@@ -811,6 +863,12 @@ export function AircraftLayer({
         source:
           "aircraft-trails",
 
+        layout: {
+          "line-cap": "round",
+
+          "line-join": "round",
+        },
+
         paint: {
           "line-color":
             "#22d3ee",
@@ -819,25 +877,19 @@ export function AircraftLayer({
 
           "line-opacity": 0.65,
         },
-
-        layout: {
-          "line-cap":
-            "round",
-
-          "line-join":
-            "round",
-        },
       });
     }
 
-    /*
-     * Add airplane icon and layer.
+    /**
+     * Aircraft icon.
      */
     ensureAircraftIcon(
       m,
       () => {
         if (
-          !m.getLayer("aircraft")
+          !m.getLayer(
+            "aircraft",
+          )
         ) {
           m.addLayer({
             id: "aircraft",
@@ -850,8 +902,7 @@ export function AircraftLayer({
               "icon-image":
                 "aircraft-icon",
 
-              "icon-size":
-                0.55,
+              "icon-size": 0.55,
 
               "icon-allow-overlap":
                 true,
@@ -875,39 +926,30 @@ export function AircraftLayer({
         }
       },
     );
-  }, [tracks, map]);
+  }, [map, tracks]);
 
-  /*
-   * Map event handlers.
-   *
-   * This effect is separate so we don't
-   * register duplicate events every 10 seconds.
+  /**
+   * Aircraft mouse/click events.
    */
   useEffect(() => {
-    const m = map.current;
+    const m = map;
 
-    if (
-      !m ||
-      !m.isStyleLoaded()
-    ) {
+    if (!m || !m.isStyleLoaded()) {
       return;
     }
 
-    /*
-     * Wait until aircraft layer exists.
-     */
     if (!m.getLayer("aircraft")) {
       return;
     }
 
-    /*
-     * CLICK
+    /**
+     * CLICK.
      */
     const handleClick = (
-      e: MapLayerMouseEvent,
+      event: MapLayerMouseEvent,
     ) => {
       const feature =
-        e.features?.[0];
+        event.features?.[0];
 
       if (!feature) {
         return;
@@ -919,50 +961,57 @@ export function AircraftLayer({
       const id =
         properties.id;
 
-      if (id) {
+      if (id !== undefined) {
         select(String(id));
       }
 
+      if (
+        feature.geometry.type !==
+        "Point"
+      ) {
+        return;
+      }
+
       const coordinates =
-        (
-          feature.geometry as GeoJSON.Point
-        ).coordinates
+        feature.geometry.coordinates
           .slice() as [
           number,
           number,
         ];
 
-      /*
-       * Remove hover popup.
-       */
       hoverPopup.current?.remove();
 
       hoverPopup.current =
         null;
 
-      /*
-       * Show detailed popup.
-       */
-      createAircraftPopup(
-        m,
+      void createAircraftPopup(
         coordinates,
         properties,
-      ).addTo(m);
+      ).then((popup) => {
+        popup.addTo(m);
+      });
     };
 
-    /*
-     * MOUSE ENTER / HOVER
+    /**
+     * MOUSE ENTER.
      */
     const handleMouseEnter = (
-      e: MapLayerMouseEvent,
+      event: MapLayerMouseEvent,
     ) => {
       m.getCanvas().style.cursor =
         "pointer";
 
       const feature =
-        e.features?.[0];
+        event.features?.[0];
 
       if (!feature) {
+        return;
+      }
+
+      if (
+        feature.geometry.type !==
+        "Point"
+      ) {
         return;
       }
 
@@ -970,49 +1019,47 @@ export function AircraftLayer({
         feature.properties ?? {};
 
       const coordinates =
-        (
-          feature.geometry as GeoJSON.Point
-        ).coordinates
+        feature.geometry.coordinates
           .slice() as [
           number,
           number,
         ];
 
-      /*
-       * Remove previous tooltip.
-       */
       hoverPopup.current?.remove();
 
-      /*
-       * Create new tooltip.
-       */
-      hoverPopup.current =
-        createHoverPopup(
-          m,
-          coordinates,
-          properties,
-        );
+      void createHoverPopup(
+        coordinates,
+        properties,
+      ).then((popup) => {
+        hoverPopup.current =
+          popup;
 
-      hoverPopup.current.addTo(m);
+        popup.addTo(m);
+      });
     };
 
-    /*
-     * Move tooltip with mouse.
+    /**
+     * MOUSE MOVE.
      */
     const handleMouseMove = (
-      e: MapLayerMouseEvent,
+      event: MapLayerMouseEvent,
     ) => {
       const feature =
-        e.features?.[0];
+        event.features?.[0];
 
       if (!feature) {
         return;
       }
 
+      if (
+        feature.geometry.type !==
+        "Point"
+      ) {
+        return;
+      }
+
       const coordinates =
-        (
-          feature.geometry as GeoJSON.Point
-        ).coordinates
+        feature.geometry.coordinates
           .slice() as [
           number,
           number,
@@ -1023,8 +1070,8 @@ export function AircraftLayer({
       );
     };
 
-    /*
-     * MOUSE LEAVE
+    /**
+     * MOUSE LEAVE.
      */
     const handleMouseLeave = () => {
       m.getCanvas().style.cursor =
@@ -1085,26 +1132,29 @@ export function AircraftLayer({
         handleMouseLeave,
       );
 
+      m.getCanvas().style.cursor =
+        "";
+
       hoverPopup.current?.remove();
 
       hoverPopup.current =
         null;
     };
-  }, [map, select, tracks]);
+  }, [map, select]);
 
   return null;
 }
 
+/**
+ * ALERTS
+ */
 export function AlertLayer({
   map,
 }: LayerProps) {
   useEffect(() => {
-    const m = map.current;
+    const m = map;
 
-    if (
-      !m ||
-      !m.isStyleLoaded()
-    ) {
+    if (!m || !m.isStyleLoaded()) {
       return;
     }
 
@@ -1136,21 +1186,29 @@ export function AlertLayer({
         },
       });
     }
+
+    return () => {
+      /**
+       * We intentionally do not remove the source/layer
+       * here because style changes and map lifecycle are
+       * managed by OperationsMap.
+       */
+    };
   }, [map]);
 
   return null;
 }
 
+/**
+ * ROUTES
+ */
 export function RouteLayer({
   map,
 }: LayerProps) {
   useEffect(() => {
-    const m = map.current;
+    const m = map;
 
-    if (
-      !m ||
-      !m.isStyleLoaded()
-    ) {
+    if (!m || !m.isStyleLoaded()) {
       return;
     }
 
@@ -1169,6 +1227,12 @@ export function RouteLayer({
 
         source: "routes",
 
+        layout: {
+          "line-cap": "round",
+
+          "line-join": "round",
+        },
+
         paint: {
           "line-color":
             "#a78bfa",
@@ -1184,16 +1248,16 @@ export function RouteLayer({
   return null;
 }
 
+/**
+ * AIRPORTS
+ */
 export function AirportLayer({
   map,
 }: LayerProps) {
   useEffect(() => {
-    const m = map.current;
+    const m = map;
 
-    if (
-      !m ||
-      !m.isStyleLoaded()
-    ) {
+    if (!m || !m.isStyleLoaded()) {
       return;
     }
 
@@ -1230,9 +1294,10 @@ export function AirportLayer({
   return null;
 }
 
-/*
- * Keep these exports so existing imports
- * do not break.
+/**
+ * Placeholder exports.
+ *
+ * Keep these if other parts of your application currently import them.
  */
 export const DroneLayer = () => null;
 
@@ -1241,5 +1306,3 @@ export const VehicleLayer = () => null;
 export const SensorLayer = () => null;
 
 export const CameraLayer = () => null;
-
-export const GeofenceLayer = () => null;

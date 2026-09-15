@@ -1,8 +1,15 @@
 "use client";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import maplibregl, { Map as MlMap } from "maplibre-gl";
-import { useEffect, useRef, useState } from "react";
+
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import type { Map as MlMap } from "maplibre-gl";
 
 import { fetchTracks } from "@/services/api";
 import { connectTracking } from "@/services/realtime";
@@ -14,14 +21,19 @@ import {
   AirportLayer,
   RouteLayer,
 } from "./layers";
+
 import { LayerControl } from "./LayerControl";
 
-// Enable proper Arabic/Hebrew shaping and right-to-left map labels.
-// MapLibre requires the RTL text plugin for Arabic labels.
-maplibregl.setRTLTextPlugin(
-  "https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js",
-  true,
-);
+/**
+ * MapLibre RTL plugin is global.
+ *
+ * React Strict Mode can execute effects more than once during
+ * development. MapLibre does not allow setRTLTextPlugin() to
+ * be called multiple times.
+ *
+ * This flag makes sure we only register it once.
+ */
+let rtlPluginInitialized = false;
 
 type MapStyleOption = {
   id: string;
@@ -45,120 +57,497 @@ const MAP_STYLES: MapStyleOption[] = [
     label: "Liberty",
     url: "https://tiles.openfreemap.org/styles/liberty",
   },
-  
 ];
 
 export function OperationsMap() {
-  const el = useRef<HTMLDivElement>(null);
-  const map = useRef<MlMap | null>(null);
-  const replace = useTrackingStore((state) => state.replace);
+  const el = useRef<HTMLDivElement | null>(null);
+
+  const mapRef = useRef<MlMap | null>(null);
+
+  const [mapInstance, setMapInstance] =
+    useState<MlMap | null>(null);
+
   const [styleId, setStyleId] = useState("bright");
-  const [styleVersion, setStyleVersion] = useState(0);
+
+  const [styleVersion, setStyleVersion] =
+    useState(0);
+
+  const [mapLoaded, setMapLoaded] =
+    useState(false);
+
+  const replace =
+    useTrackingStore((state) => state.replace);
+
+  /**
+   * Keep the latest Zustand replace function available
+   * without causing the MapLibre initialization effect
+   * to rerun whenever the store changes.
+   */
+  const replaceRef = useRef(replace);
 
   useEffect(() => {
-    if (!el.current) return;
-
-    const disconnect = connectTracking();
-
-    const instance = new maplibregl.Map({
-      container: el.current,
-      style: MAP_STYLES[0].url,
-      center: [38.9968, 35.0],
-      zoom: 6.2,
-      attributionControl: false,
-      dragRotate: false,
-      pitchWithRotate: false,
-      maxPitch: 0,
-    });
-
-    map.current = instance;
-
-    instance.addControl(
-      new maplibregl.NavigationControl({
-        showCompass: false,
-        visualizePitch: false,
-      }),
-      "bottom-right",
-    );
-
-    instance.addControl(new maplibregl.FullscreenControl(), "bottom-right");
-
-    const loadTracks = () => {
-      const bounds = instance.getBounds();
-
-      fetchTracks(
-        `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`,
-      )
-        .then(replace)
-        .catch(() => undefined);
-    };
-
-    instance.on("load", loadTracks);
-    instance.on("moveend", loadTracks);
-
-    return () => {
-      disconnect();
-      instance.remove();
-      map.current = null;
-    };
+    replaceRef.current = replace;
   }, [replace]);
 
-  const changeStyle = (nextStyleId: string) => {
-    const nextStyle = MAP_STYLES.find((style) => style.id === nextStyleId);
-    const instance = map.current;
-    if (!nextStyle || !instance || nextStyle.id === styleId) return;
+  /**
+   * Fetch tracks inside the current map viewport.
+   */
+  const loadTracks = useCallback(
+    async (instance: MlMap) => {
+      try {
+        const bounds = instance.getBounds();
+
+        const bbox = [
+          bounds.getWest(),
+          bounds.getSouth(),
+          bounds.getEast(),
+          bounds.getNorth(),
+        ].join(",");
+
+        const tracks = await fetchTracks(bbox);
+
+        replaceRef.current(tracks);
+      } catch (error) {
+        console.error(
+          "Failed to load tracks:",
+          error,
+        );
+      }
+    },
+    [],
+  );
+
+  /**
+   * Initialize MapLibre.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    let disconnectTracking:
+      | (() => void)
+      | undefined;
+
+    let cleanupMapListeners:
+      | (() => void)
+      | undefined;
+
+    let instance: MlMap | null = null;
+
+    async function initializeMap() {
+      if (!el.current) {
+        return;
+      }
+
+      try {
+        /**
+         * Dynamic browser-only MapLibre import.
+         */
+        const { default: maplibregl } =
+          await import("maplibre-gl");
+
+        /**
+         * The component may have been unmounted while
+         * MapLibre was loading.
+         */
+        if (cancelled || !el.current) {
+          return;
+        }
+
+        /**
+         * Register the RTL plugin only once.
+         *
+         * MapLibre throws:
+         *
+         * "setRTLTextPlugin cannot be called multiple times."
+         *
+         * when this is executed more than once.
+         */
+        if (!rtlPluginInitialized) {
+          try {
+            maplibregl.setRTLTextPlugin(
+              "https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js",
+              true,
+            );
+
+            rtlPluginInitialized = true;
+          } catch (error) {
+            /**
+             * If another component/effect registered the
+             * plugin between the check and this call, don't
+             * break map initialization.
+             */
+            console.warn(
+              "MapLibre RTL plugin initialization warning:",
+              error,
+            );
+          }
+        }
+
+        /**
+         * Make sure the component wasn't unmounted while
+         * the RTL plugin was being initialized.
+         */
+        if (cancelled || !el.current) {
+          return;
+        }
+
+        /**
+         * Connect Laravel Reverb / Echo.
+         */
+        try {
+          disconnectTracking =
+            connectTracking();
+        } catch (error) {
+          console.error(
+            "Failed to connect tracking:",
+            error,
+          );
+        }
+
+        /**
+         * Make sure the component is still mounted.
+         */
+        if (cancelled || !el.current) {
+          disconnectTracking?.();
+          return;
+        }
+
+        /**
+         * Create MapLibre map.
+         */
+        instance = new maplibregl.Map({
+          container: el.current,
+
+          style: MAP_STYLES[0].url,
+
+          center: [38.9968, 35.0],
+
+          zoom: 6.2,
+
+          attributionControl: false,
+
+          dragRotate: false,
+
+          pitchWithRotate: false,
+
+          maxPitch: 0,
+        });
+
+        /**
+         * If React unmounted the component while the map
+         * was being created, destroy the map immediately.
+         */
+        if (cancelled) {
+          instance.remove();
+          instance = null;
+          return;
+        }
+
+        /**
+         * Save map reference.
+         */
+        mapRef.current = instance;
+
+        /**
+         * Store actual map instance in React state.
+         */
+        setMapInstance(instance);
+
+        /**
+         * Navigation controls.
+         */
+        instance.addControl(
+          new maplibregl.NavigationControl({
+            showCompass: false,
+            visualizePitch: false,
+          }),
+          "bottom-right",
+        );
+
+        /**
+         * Fullscreen control.
+         */
+        instance.addControl(
+          new maplibregl.FullscreenControl(),
+          "bottom-right",
+        );
+
+        /**
+         * Map loaded.
+         */
+        const handleLoad = () => {
+          if (cancelled) {
+            return;
+          }
+
+          setMapLoaded(true);
+
+          void loadTracks(instance!);
+        };
+
+        /**
+         * Reload aircraft whenever the viewport changes.
+         */
+        const handleMoveEnd = () => {
+          if (cancelled) {
+            return;
+          }
+
+          void loadTracks(instance!);
+        };
+
+        instance.on(
+          "load",
+          handleLoad,
+        );
+
+        instance.on(
+          "moveend",
+          handleMoveEnd,
+        );
+
+        /**
+         * Save listener cleanup.
+         */
+        cleanupMapListeners = () => {
+          if (!instance) {
+            return;
+          }
+
+          instance.off(
+            "load",
+            handleLoad,
+          );
+
+          instance.off(
+            "moveend",
+            handleMoveEnd,
+          );
+        };
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "Failed to initialize Operations Map:",
+            error,
+          );
+        }
+      }
+    }
+
+    void initializeMap();
+
+    /**
+     * Cleanup.
+     */
+    return () => {
+      cancelled = true;
+
+      /**
+       * Remove event listeners.
+       */
+      cleanupMapListeners?.();
+
+      /**
+       * Disconnect Laravel Reverb / Echo.
+       */
+      try {
+        disconnectTracking?.();
+      } catch (error) {
+        console.warn(
+          "Failed to disconnect tracking:",
+          error,
+        );
+      }
+
+      /**
+       * Destroy MapLibre.
+       */
+      if (mapRef.current) {
+        try {
+          mapRef.current.remove();
+        } catch (error) {
+          console.warn(
+            "Failed to remove MapLibre instance:",
+            error,
+          );
+        }
+      }
+
+      /**
+       * Also handle the local instance in case the
+       * asynchronous initialization completed right
+       * before cleanup.
+       */
+      if (
+        instance &&
+        instance !== mapRef.current
+      ) {
+        try {
+          instance.remove();
+        } catch (error) {
+          console.warn(
+            "Failed to remove local MapLibre instance:",
+            error,
+          );
+        }
+      }
+
+      mapRef.current = null;
+
+      setMapInstance(null);
+
+      setMapLoaded(false);
+    };
+  }, [loadTracks]);
+
+  /**
+   * Change MapLibre style.
+   */
+  const changeStyle = (
+    nextStyleId: string,
+  ) => {
+    const nextStyle =
+      MAP_STYLES.find(
+        (style) =>
+          style.id === nextStyleId,
+      );
+
+    const instance =
+      mapRef.current;
+
+    if (
+      !nextStyle ||
+      !instance ||
+      nextStyle.id === styleId
+    ) {
+      return;
+    }
 
     setStyleId(nextStyle.id);
-    instance.setStyle(nextStyle.url);
-    instance.once("style.load", () => setStyleVersion((version) => version + 1));
+
+    /**
+     * Change MapLibre style.
+     */
+    instance.setStyle(
+      nextStyle.url,
+    );
+
+    /**
+     * MapLibre removes/rebuilds style
+     * sources and layers.
+     *
+     * Incrementing styleVersion causes
+     * our React layer components to
+     * remount and recreate their sources
+     * and layers.
+     */
+    instance.once(
+      "style.load",
+      () => {
+        setStyleVersion(
+          (version) =>
+            version + 1,
+        );
+      },
+    );
   };
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-slate-950">
-      <div ref={el} className="h-full w-full" />
+      {/* Map container */}
+      <div
+        ref={el}
+        className="h-full w-full"
+      />
 
+      {/* Map visual overlay */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,transparent_35%,rgba(2,6,23,.16)_100%)]" />
 
+      {/* Map style selector */}
       <div className="absolute left-4 top-4 z-20 flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white/90 p-1.5 text-slate-900 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/90 dark:text-slate-100">
-        <label className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        <label
+          htmlFor="operations-map-style"
+          className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
+        >
           Map style
         </label>
+
         <select
+          id="operations-map-style"
           value={styleId}
-          onChange={(event) => changeStyle(event.target.value)}
+          onChange={(event) =>
+            changeStyle(
+              event.target.value,
+            )
+          }
           className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none transition focus:border-cyan-400/50 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
           aria-label="Map style"
         >
-          {MAP_STYLES.map((style) => (
-            <option key={style.id} value={style.id}>
-              {style.label}
-            </option>
-          ))}
+          {MAP_STYLES.map(
+            (style) => (
+              <option
+                key={style.id}
+                value={style.id}
+              >
+                {style.label}
+              </option>
+            ),
+          )}
         </select>
       </div>
 
-      <LayerControl map={map} />
+      {/* Map controls */}
+      <LayerControl
+        map={mapInstance}
+        mapLoaded={mapLoaded}
+      />
 
-      <div key={styleVersion}>
-        <AircraftLayer map={map} />
-        <AlertLayer map={map} />
-        <RouteLayer map={map} />
-        <AirportLayer map={map} />
-      </div>
+      {/* Map layers */}
+      {mapInstance && (
+        <div
+          key={styleVersion}
+        >
+          <AircraftLayer
+            map={mapInstance}
+          />
 
+          <AlertLayer
+            map={mapInstance}
+          />
+
+          <RouteLayer
+            map={mapInstance}
+          />
+
+          <AirportLayer
+            map={mapInstance}
+          />
+        </div>
+      )}
+
+      {/* Theme CSS for MapLibre native controls */}
       <OperationsMapThemeStyles />
 
-      <div className="pointer-events-none absolute bottom-4 left-4 rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 shadow-xl backdrop-blur-xl">
-        <span className="text-cyan-300">●</span> Aircraft
-        <span className="ml-3 text-amber-300">●</span> Alerts
+      {/* Legend */}
+      <div className="pointer-events-none absolute bottom-4 left-4 rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-[9px] uppercase tracking-wider text-slate-500 shadow-xl backdrop-blur-xl dark:text-slate-400">
+        <span className="text-cyan-300">
+          ●
+        </span>{" "}
+        Aircraft
+
+        <span className="ml-3 text-amber-300">
+          ●
+        </span>{" "}
+        Alerts
       </div>
     </div>
   );
 }
 
-// Keep MapLibre's native fullscreen/navigation controls synchronized with the
-// application's light/dark theme. The controls themselves are rendered by
-// MapLibre, so Tailwind classes on the React buttons cannot style them.
+/**
+ * Keep MapLibre native controls synchronized
+ * with the application's light/dark theme.
+ */
 export function OperationsMapThemeStyles() {
   return (
     <style jsx global>{`

@@ -9,13 +9,15 @@ use App\Http\Controllers\Api\V1\AlertController;
 use App\Jobs\FetchFlightradar24Aircraft;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 Route::get('/fr24', function (Request $request) {
-event(new \App\Events\ReverbTestEvent($request->query('t')));
+    event(new \App\Events\ReverbTestEvent($request->query('t')));
     return response()->json([
         'success' => true,
         'message' => 'FetchFlightradar24Aircraft dispatched.',
     ]);
 });
+ 
 Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::get('system/status', SystemController::class);

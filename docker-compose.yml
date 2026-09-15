@@ -212,32 +212,32 @@ services:
   # Flightradar24 Fetcher
   # Runs every 6 seconds
   # ============================================================
-  # scheduler:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
 
-  #   container_name: tracking_scheduler
-  #   restart: unless-stopped
+    container_name: tracking_scheduler
+    restart: unless-stopped
 
-  #   working_dir: /var/www
+    working_dir: /var/www
 
-  #   command:
-  #     - php
-  #     - artisan
-  #     - flights:fetch
+    command:
+      - php
+      - artisan
+      - flights:fetch
 
-  #   volumes:
-  #     - ./backend:/var/www
+    volumes:
+      - ./backend:/var/www
 
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
-  #   networks:
-  #     - tracking
+    networks:
+      - tracking
 
 
   # ============================================================

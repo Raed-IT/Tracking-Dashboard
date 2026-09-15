@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { AppPreferences } from "@/components/providers/AppPreferences";
-
 export const metadata: Metadata = {
   title: "Air Operations",
   description: "Live multi-source aircraft tracking and operational awareness.",
@@ -18,7 +18,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
+        <Script
           dangerouslySetInnerHTML={{
             __html: `(() => {
               try {

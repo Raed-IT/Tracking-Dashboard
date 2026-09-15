@@ -54,8 +54,8 @@ const [fullscreen, setFullscreen] = useState(false);
   const stats = [
     {
       label: t.dashboard.activeTracks,
-      // value: dashboard.metrics.tracks,
-      value: message,
+      value: dashboard.metrics.tracks,
+      // value: message,
       detail: t.dashboard.activeTracksDetail,
       icon: RadioTower,
       accent: "text-cyan-500 dark:text-cyan-300",
@@ -94,8 +94,9 @@ const [fullscreen, setFullscreen] = useState(false);
         title={t.dashboard.title}
         description={t.dashboard.description}
       />
-
+{message}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        
         {stats.map(({ label, value, detail, icon: Icon, accent, bg }) => (
           <article
             key={label}
