@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -103,12 +103,32 @@ export function OperationsDrawer({
   const [mobile, setMobile] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [palette, setPalette] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (realtimeStatus === "disconnected") {
       showNotice("error", t.common.realtimeDisconnectedAlert);
     }
   }, [realtimeStatus, showNotice, t.common.realtimeDisconnectedAlert]);
+
+  useEffect(() => {
+    if (!notificationsOpen) {
+      return;
+    }
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, [notificationsOpen]);
 
   // Command palette shortcut
   useEffect(() => {
@@ -379,20 +399,99 @@ export function OperationsDrawer({
               {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
             </Button>
 
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label={t.common.notifications}
-              className="relative"
-              onClick={() => router.push("/alerts")}
-            >
-              <Bell size={17} />
-              {realtimeAlerts.length > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
-                  {realtimeAlerts.length > 9 ? "9+" : realtimeAlerts.length}
-                </span>
+            <div className="relative" ref={notificationsRef}>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={t.common.notifications}
+                aria-expanded={notificationsOpen}
+                className="relative"
+                onClick={() => setNotificationsOpen((value) => !value)}
+              >
+                <Bell size={17} />
+                {realtimeAlerts.length > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                    {realtimeAlerts.length > 9 ? "9+" : realtimeAlerts.length}
+                  </span>
+                )}
+              </Button>
+
+              {notificationsOpen && (
+                <section className="absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15 dark:border-white/[.1] dark:bg-slate-900 dark:shadow-black/40">
+                  <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[.07]">
+                    <div>
+                      <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                        Realtime alerts
+                      </h2>
+                      <p className="mt-0.5 text-[10px] text-slate-500">
+                        Latest notifications from live operations
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-cyan-400/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-300">
+                      Live
+                    </span>
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto p-2">
+                    {realtimeAlerts.slice(0, 5).map((alert) => (
+                      <article
+                        key={alert.id}
+                        className="rounded-xl px-3 py-3 transition hover:bg-slate-100 dark:hover:bg-white/[.04]"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={[
+                              "mt-1 h-2 w-2 shrink-0 rounded-full",
+                              alert.severity === "critical" || alert.severity === "high"
+                                ? "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,.7)]"
+                                : "bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,.6)]",
+                            ].join(" ")}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <strong className="truncate text-xs text-slate-800 dark:text-slate-200">
+                                {alert.title}
+                              </strong>
+                              <time className="shrink-0 text-[9px] text-slate-400">
+                                {alert.created_at
+                                  ? new Date(alert.created_at).toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
+                                  : "—"}
+                              </time>
+                            </div>
+                            <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">
+                              {alert.message ?? "No additional context"}
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+
+                    {realtimeAlerts.length === 0 && (
+                      <div className="px-3 py-8 text-center">
+                        <Bell size={18} className="mx-auto text-slate-400" />
+                        <p className="mt-2 text-xs text-slate-500">
+                          No new realtime alerts
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNotificationsOpen(false);
+                      router.push("/alerts");
+                    }}
+                    className="flex w-full items-center justify-center border-t border-slate-200 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-cyan-600 transition hover:bg-cyan-400/5 dark:border-white/[.07] dark:text-cyan-300"
+                  >
+                    Show all alerts
+                  </button>
+                </section>
               )}
-            </Button>
+            </div>
 
             <span
               className={[
