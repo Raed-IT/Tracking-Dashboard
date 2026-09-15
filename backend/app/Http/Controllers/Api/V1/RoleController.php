@@ -108,8 +108,14 @@ final class RoleController extends Controller
         return response()->json(['data' => $this->definitions()]);
     }
 
-    public function destroy(string $role): JsonResponse
+    public function destroy(Request $request, string $role): JsonResponse
     {
+        abort_unless(
+            OrganizationRole::canonical((string) $request->user()?->role) === OrganizationRole::Superadmin->value,
+            403,
+            'Only super admins can delete roles.',
+        );
+
         $model = Role::query()->where('slug', $role)->first();
 
         if ($model === null) {

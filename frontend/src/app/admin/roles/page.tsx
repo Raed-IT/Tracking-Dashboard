@@ -15,6 +15,7 @@ import {
 } from "@/services/api";
 import type { Permission, PermissionDefinition, RoleDefinition } from "@/types/auth";
 import { useNoticeStore } from "@/stores/notice-store";
+import { useAuthStore } from "@/stores/auth-store";
 
 type Draft = {
   name: string;
@@ -35,6 +36,8 @@ export default function RolesPage() {
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [busy, setBusy] = useState(false);
   const showNotice = useNoticeStore((state) => state.show);
+  const currentUser = useAuthStore((state) => state.user);
+  const canDeleteRoles = currentUser?.role === "superadmin";
 
   const permissionGroups = useMemo(
     () =>
@@ -153,7 +156,11 @@ export default function RolesPage() {
   };
 
   const deleteCurrentRole = async () => {
-    if (!selectedRole || selectedRole.is_system) {
+    if (!canDeleteRoles || !selectedRole || selectedRole.is_system) {
+      return;
+    }
+
+    if (!window.confirm(`Delete the ${selectedRole.label} role?`)) {
       return;
     }
 
@@ -224,7 +231,7 @@ export default function RolesPage() {
                     <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{selectedRole ? (selectedRole.is_system ? "System role" : "Custom role") : "Create role"}</p>
                     <h2 className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">{selectedRole ? selectedRole.label : "New access role"}</h2>
                   </div>
-                  {!selectedRole || !selectedRole.is_system ? (
+                  {canDeleteRoles && selectedRole && !selectedRole.is_system ? (
                     <Button variant="danger" size="sm" onClick={deleteCurrentRole} disabled={!selectedRole || busy}>
                       <Trash2 size={14} />Delete
                     </Button>
