@@ -34,20 +34,21 @@ export function playAlertSound(volume: number): void {
 
     alertAudioContext ??= new window.AudioContext();
     const context = alertAudioContext;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const now = context.currentTime;
+    void context.resume().then(() => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        const now = context.currentTime;
 
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(740, now);
-    oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.16);
-    gain.gain.setValueAtTime(volume * 0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.16);
-    void context.resume().catch((error: unknown) => {
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(740, now);
+        oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.16);
+        gain.gain.setValueAtTime(volume * 0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(now);
+        oscillator.stop(now + 0.16);
+    }).catch((error: unknown) => {
         console.warn("Alert sound could not play until the browser allows audio:", error);
     });
 }

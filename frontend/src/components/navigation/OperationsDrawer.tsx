@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   Bell,
+  CheckCheck,
   ChevronLeft,
   Command,
   Database,
@@ -96,6 +97,9 @@ export function OperationsDrawer({
   const realtimeStatus = useRealtimeStore((state) => state.status);
   const showNotice = useNoticeStore((state) => state.show);
   const realtimeAlerts = useRealtimeAlertStore((state) => state.alerts);
+  const unreadIds = useRealtimeAlertStore((state) => state.unreadIds);
+  const markRead = useRealtimeAlertStore((state) => state.markRead);
+  const markAllRead = useRealtimeAlertStore((state) => state.markAllRead);
 
   const { language, theme, toggleLanguage, toggleTheme } = useAppPreferences();
   const { t } = useTranslation();
@@ -409,9 +413,9 @@ export function OperationsDrawer({
                 onClick={() => setNotificationsOpen((value) => !value)}
               >
                 <Bell size={17} />
-                {realtimeAlerts.length > 0 && (
+                {unreadIds.length > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
-                    {realtimeAlerts.length > 9 ? "9+" : realtimeAlerts.length}
+                    {unreadIds.length > 9 ? "9+" : unreadIds.length}
                   </span>
                 )}
               </Button>
@@ -427,16 +431,20 @@ export function OperationsDrawer({
                         Latest notifications from live operations
                       </p>
                     </div>
-                    <span className="rounded-full bg-cyan-400/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-300">
-                      Live
-                    </span>
+                    <button type="button" onClick={markAllRead} disabled={unreadIds.length === 0} className="flex items-center gap-1 rounded-full bg-cyan-400/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-cyan-600 disabled:opacity-40 dark:text-cyan-300">
+                      <CheckCheck size={12} /> Read all
+                    </button>
                   </div>
 
                   <div className="max-h-80 overflow-y-auto p-2">
                     {realtimeAlerts.slice(0, 5).map((alert) => (
                       <article
                         key={alert.id}
-                        className="rounded-xl px-3 py-3 transition hover:bg-slate-100 dark:hover:bg-white/[.04]"
+                        className={[
+                          "rounded-xl px-3 py-3 transition hover:bg-slate-100 dark:hover:bg-white/[.04]",
+                          unreadIds.includes(alert.id) ? "bg-cyan-400/[.06]" : "opacity-70",
+                        ].join(" ")}
+                        onClick={() => markRead(alert.id)}
                       >
                         <div className="flex items-start gap-3">
                           <span
@@ -461,6 +469,11 @@ export function OperationsDrawer({
                                   : "—"}
                               </time>
                             </div>
+                            {unreadIds.includes(alert.id) && (
+                              <span className="mt-1 inline-block text-[9px] font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-300">
+                                Unread
+                              </span>
+                            )}
                             <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">
                               {alert.message ?? "No additional context"}
                             </p>
