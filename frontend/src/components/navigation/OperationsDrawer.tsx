@@ -230,7 +230,7 @@ export function OperationsDrawer({
             </div>
 
             <div className="mt-1 truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-              {user?.organization?.name ?? "Operations"}
+              Operations
             </div>
 
             <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-300">

@@ -25,7 +25,7 @@ return new class extends Migration
             DB::table('roles')->insertOrIgnore([
                 'name' => $role->label(),
                 'slug' => $role->value,
-                'description' => sprintf('%s default organization role.', $role->label()),
+                'description' => sprintf('%s default role.', $role->label()),
                 'is_system' => true,
                 'created_at' => now(),
                 'updated_at' => now(),

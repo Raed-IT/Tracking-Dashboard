@@ -90,10 +90,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
                     ?? null;
 
                 $track = Track::query()
-                    ->where(
-                        'organization_id',
-                        $source->organization_id
-                    )
                     ->whereJsonContains(
                         'external_identifiers->fr24_id',
                         $fr24Id
@@ -104,8 +100,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
                     $track = new Track();
 
                     $track->uuid = (string) Str::uuid();
-                    $track->organization_id =
-                        $source->organization_id;
                     $track->type = 'aircraft';
 
                     $track->classification =
@@ -359,8 +353,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
                 'FR24 API credit limit reached.',
                 [
                     'source_id' => $source->id,
-                    'organization_id' =>
-                        $source->organization_id,
                     'error' => $errorMessage,
                     'code' => $errorCode,
                 ]
@@ -403,8 +395,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
             'FR24 polling failed.',
             [
                 'source_id' => $source->id,
-                'organization_id' =>
-                    $source->organization_id,
                 'error' => $errorMessage,
                 'exception' => get_class($e),
                 'code' => $errorCode,
@@ -435,10 +425,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
         $title = 'Flightradar24 API Credits Exhausted';
 
         $activeAlert = ModelsAlert::query()
-            ->where(
-                'organization_id',
-                $source->organization_id
-            )
             ->where('title', $title)
             ->where('state', 'active')
             ->first();
@@ -459,9 +445,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
 
         $alert = ModelsAlert::create([
             'uuid' => (string) Str::uuid(),
-
-            'organization_id' =>
-                $source->organization_id,
 
             'track_id' => null,
 
@@ -496,8 +479,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
             [
                 'alert_id' => $alert->id,
                 'source_id' => $source->id,
-                'organization_id' =>
-                    $source->organization_id,
             ]
         );
     }
@@ -516,10 +497,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
         $title = 'Flightradar24 Data Source Offline';
 
         $activeAlert = ModelsAlert::query()
-            ->where(
-                'organization_id',
-                $source->organization_id
-            )
             ->where('title', $title)
             ->where('state', 'active')
             ->first();
@@ -549,9 +526,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
          */
         $alert = ModelsAlert::create([
             'uuid' => (string) Str::uuid(),
-
-            'organization_id' =>
-                $source->organization_id,
 
             'track_id' => null,
 
@@ -594,8 +568,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
             [
                 'alert_id' => $alert->id,
                 'source_id' => $source->id,
-                'organization_id' =>
-                    $source->organization_id,
                 'error' => $exception->getMessage(),
             ]
         );
@@ -617,10 +589,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
         ];
 
         $updated = ModelsAlert::query()
-            ->where(
-                'organization_id',
-                $source->organization_id
-            )
             ->whereIn('title', $titles)
             ->where('state', 'active')
             ->update([
@@ -633,8 +601,6 @@ final class FetchFlightradar24Aircraft implements ShouldQueue
                 'Active FR24 alerts resolved after successful API request.',
                 [
                     'source_id' => $source->id,
-                    'organization_id' =>
-                        $source->organization_id,
                     'alerts_resolved' => $updated,
                 ]
             );

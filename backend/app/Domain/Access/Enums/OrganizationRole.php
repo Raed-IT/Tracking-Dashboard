@@ -7,6 +7,7 @@ namespace App\Domain\Access\Enums;
 enum OrganizationRole: string
 {
     case Administrator = 'administrator';
+    case Superadmin = 'superadmin';
     case Supervisor = 'supervisor';
     case Operator = 'operator';
     case Viewer = 'viewer';
@@ -24,16 +25,29 @@ enum OrganizationRole: string
         );
     }
 
+    public static function canonical(string $role): string
+    {
+        $normalized = strtolower(str_replace(['-', '_'], '', trim($role)));
+
+        return match ($normalized) {
+            'superadmin' => self::Administrator->value,
+            default => $role,
+        };
+    }
+
     public function label(): string
     {
-        return ucfirst($this->value);
+        return match ($this) {
+            self::Superadmin => 'Super admin',
+            default => ucfirst($this->value),
+        };
     }
 
     /** @return list<string> */
     public function permissions(): array
     {
         return match ($this) {
-            self::Administrator => Permission::values(),
+            self::Administrator, self::Superadmin => Permission::values(),
             self::Supervisor => [
                 Permission::TracksView->value,
                 Permission::SourcesView->value,

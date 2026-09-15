@@ -43,7 +43,7 @@ Route::prefix('v1')->group(function () {
             Route::post('sources', [SourceController::class, 'store']);
             Route::patch('sources/{source}', [SourceController::class, 'update']);
         });
-        Route::middleware('permission:users.manage')->apiResource('organization/users', OrganizationUserController::class)->except('show');
+        Route::middleware('permission:users.manage')->apiResource('users', OrganizationUserController::class)->except('show');
         Route::middleware('permission:alerts.view')->get('alerts', [AlertController::class, 'index']);
         Route::middleware('permission:alerts.manage')->post('alerts/{alert}/acknowledge', [AlertController::class, 'acknowledge']);
     });

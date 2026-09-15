@@ -9,20 +9,20 @@ import { PermissionGate } from "@/components/auth/PermissionGate";
 import { OperationsDrawer } from "@/components/navigation/OperationsDrawer";
 import { UserForm } from "@/components/admin/UserForm";
 import { PageHeader } from "@/components/ui/Page";
-import { fetchOrganizationUsers } from "@/services/api";
-import type { OrganizationUser } from "@/types/auth";
+import { fetchUsers } from "@/services/api";
+import type { UserRecord } from "@/types/auth";
 
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
-  const [user, setUser] = useState<OrganizationUser>();
+  const [user, setUser] = useState<UserRecord>();
   const [error, setError] = useState("");
 
   useEffect(() => {
-    void fetchOrganizationUsers({ perPage: 100 }).then((users) => {
+    void fetchUsers({ perPage: 100 }).then((users) => {
       const match = users.find((item) => item.id === params.id);
       if (match) setUser(match);
-      else setError("This organization user could not be found.");
+      else setError("This user could not be found.");
     }).catch(() => setError("Unable to load this user."));
   }, [params.id]);
 

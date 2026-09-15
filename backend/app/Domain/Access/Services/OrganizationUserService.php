@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Domain\Access\Services;
 
 use App\Domain\Access\Contracts\OrganizationUserRepository;
-use App\Domain\Access\Enums\OrganizationRole;
-use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -14,30 +12,28 @@ final readonly class OrganizationUserService
 {
     public function __construct(private OrganizationUserRepository $users) {}
 
-    public function paginate(Organization $organization, int $perPage = 25, ?string $search = null, ?string $role = null, string $sort = 'name', string $direction = 'asc'): LengthAwarePaginator
+    public function paginate(int $perPage = 25, ?string $search = null, ?string $role = null, string $sort = 'name', string $direction = 'asc'): LengthAwarePaginator
     {
-        return $this->users->paginate($organization, $perPage, $search, $role, $sort, $direction);
+        return $this->users->paginate($perPage, $search, $role, $sort, $direction);
     }
 
-    public function create(Organization $organization, array $attributes): User
+    public function create(array $attributes): User
     {
-        return $this->users->create($organization, $attributes);
+        return $this->users->create($attributes);
     }
 
-    public function update(Organization $organization, User $user, array $attributes): User
+    public function update(User $user, array $attributes): User
     {
-        $this->users->findMember($organization, $user);
-        $updated = $this->users->update($organization, $user, $attributes);
+        $updated = $this->users->update($user, $attributes);
         $updated->tokens()->delete();
 
         return $updated;
     }
 
-    public function remove(User $actor, Organization $organization, User $user): void
+    public function remove(User $actor, User $user): void
     {
         abort_if($actor->is($user), 422, 'You cannot delete your own account.');
-        $member = $this->users->findMember($organization, $user);
-        abort_if($member->pivot->role === OrganizationRole::Administrator->value && $this->users->administratorCount($organization) === 1, 422, 'The organization must retain an administrator.');
-        $this->users->remove($organization,$user);
+        $this->users->findMember($user);
+        $this->users->remove($user);
     }
 }

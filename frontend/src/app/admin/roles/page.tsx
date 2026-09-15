@@ -141,7 +141,7 @@ export default function RolesPage() {
                 Roles & permissions
               </h1>
               <p className="mt-2 text-sm text-slate-500">
-                Review the capability boundaries applied to every organization
+                Review the capability boundaries applied to every user
                 member.
               </p>
             </div>

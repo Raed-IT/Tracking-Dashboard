@@ -12,6 +12,9 @@ services:
     restart: unless-stopped
     working_dir: /var/www
 
+    environment:
+      LOG_STACK: stderr
+
     volumes:
       - ./backend:/var/www
 
@@ -195,6 +198,9 @@ services:
       - artisan
       - horizon
 
+    environment:
+      LOG_STACK: stderr
+
     volumes:
       - ./backend:/var/www
 
@@ -226,6 +232,9 @@ services:
       - php
       - artisan
       - flights:fetch
+
+    environment:
+      LOG_STACK: stderr
 
     volumes:
       - ./backend:/var/www
@@ -259,6 +268,9 @@ services:
       - reverb:start
       - --host=0.0.0.0
       - --port=8080
+
+    environment:
+      LOG_STACK: stderr
 
     volumes:
       - ./backend:/var/www

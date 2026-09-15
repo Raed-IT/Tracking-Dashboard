@@ -10,11 +10,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Laravel\Sanctum\HasApiTokens;
- class User extends Authenticatable
-{
-    /** @use HasFactory<UserFactory> */
+class User extends Authenticatable
+{    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasUuids, Notifiable;
       
 
@@ -28,16 +26,12 @@ use Laravel\Sanctum\HasApiTokens;
         'name',
         'email',
         'password',
+        'role',
     ];
  
     public function uniqueIds(): array
     {
         return ['uuid'];
-    }
-
-    public function organizations(): BelongsToMany
-    {
-        return $this->belongsToMany(Organization::class)->withPivot('role');
     }
 
     public function getRouteKeyName(): string
@@ -48,22 +42,20 @@ use Laravel\Sanctum\HasApiTokens;
     /** @return list<string> */
     public function permissions(): array
     {
-        return $this->organizations
-            ->map(fn (Organization $organization) => RolePermission::query()
-                ->where('role', (string) $organization->pivot->role)
-                ->pluck('permission')
-                ->all())
-            ->flatten()->unique()->values()->all();
+        $role = (string) $this->role;
+        $normalized = OrganizationRole::canonical($role);
+
+        return RolePermission::query()
+            ->whereIn('role', array_values(array_unique([$role, $normalized])))
+            ->pluck('permission')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function hasPermission(string $permission): bool
     {
         return in_array($permission, $this->permissions(), true);
-    }
-
-    public function currentOrganizationId(): ?int
-    {
-        return $this->organizations->first()?->getKey();
     }
 
     /**

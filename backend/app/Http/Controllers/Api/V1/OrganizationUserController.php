@@ -23,14 +23,13 @@ final class OrganizationUserController extends Controller
         $request = request();
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
-            'role' => ['nullable', 'in:administrator,supervisor,operator,viewer'],
+            'role' => ['nullable', 'string', 'max:255'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'sort' => ['nullable', 'in:name,email,role,created_at'],
             'direction' => ['nullable', 'in:asc,desc'],
         ]);
 
         return OrganizationUserResource::collection($this->users->paginate(
-            $request->user()->organizations->firstOrFail(),
             (int) ($validated['per_page'] ?? 25),
             $validated['search'] ?? null,
             $validated['role'] ?? null,
@@ -41,20 +40,19 @@ final class OrganizationUserController extends Controller
 
     public function store(StoreOrganizationUserRequest $request): JsonResponse
     {
-        return (new OrganizationUserResource($this->users->create($request->user()->organizations->firstOrFail(), $request->validated())))
+        return (new OrganizationUserResource($this->users->create($request->validated())))
             ->response()->setStatusCode(201);
     }
 
     public function update(UpdateOrganizationUserRequest $request, User $user): OrganizationUserResource
     {
-        return new OrganizationUserResource($this->users->update($request->user()->organizations->firstOrFail(), $user, $request->validated()));
+        return new OrganizationUserResource($this->users->update($user, $request->validated()));
     }
 
     public function destroy(User $user): Response
     {
         $actor = request()->user();
-        $organization = $actor->organizations->firstOrFail();
-        $this->users->remove($actor, $organization, $user);
+        $this->users->remove($actor, $user);
 
         return response()->noContent();
     }

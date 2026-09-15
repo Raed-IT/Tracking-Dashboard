@@ -9,6 +9,7 @@ use App\Domain\Access\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\RolePermission;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -61,13 +62,19 @@ final class RoleController extends Controller
         ]);
 
         if (OrganizationRole::tryFrom($role) !== null) {
-            $this->syncPermissions($role, $validated['permissions'] ?? RolePermission::query()->where('role', $role)->pluck('permission')->all());
+            $rolePermissions = RolePermission::query()
+                ->whereIn('role', array_values(array_unique([$role, OrganizationRole::canonical($role)])))
+                ->pluck('permission')
+                ->all();
+
+            $this->syncPermissions($role, $validated['permissions'] ?? $rolePermissions);
 
             return response()->json(['data' => $this->definitions()]);
         }
 
         $record = Role::query()->where('slug', $role)->first();
         abort_unless($record, 404, 'Unknown role.');
+        $previousSlug = $record->slug;
 
         if (isset($validated['name'])) {
             $slug = $this->slugifyRoleName((string) $validated['name']);
@@ -82,6 +89,15 @@ final class RoleController extends Controller
 
         $record->save();
 
+        if ($previousSlug !== $record->slug) {
+            User::query()
+                ->where('role', $previousSlug)
+                ->update(['role' => $record->slug]);
+            RolePermission::query()
+                ->where('role', $previousSlug)
+                ->update(['role' => $record->slug]);
+        }
+
         if (array_key_exists('permissions', $validated)) {
             $this->syncPermissions($record->slug, $validated['permissions']);
         }
@@ -94,6 +110,7 @@ final class RoleController extends Controller
         $record = Role::query()->where('slug', $role)->first();
         abort_unless($record, 404, 'Unknown role.');
         abort_if($record->is_system, 422, 'System roles cannot be deleted.');
+        abort_if($record->users()->exists(), 422, 'Reassign users before deleting this role.');
 
         DB::transaction(function () use ($record): void {
             RolePermission::query()->where('role', $record->slug)->delete();
@@ -105,27 +122,36 @@ final class RoleController extends Controller
 
     private function syncPermissions(string $role, array $permissions): void
     {
-        DB::transaction(function () use ($role, $permissions): void {
-            RolePermission::query()->where('role', $role)->delete();
+        $canonicalRole = OrganizationRole::canonical($role);
+
+        DB::transaction(function () use ($canonicalRole, $permissions): void {
+            RolePermission::query()->where('role', $canonicalRole)->delete();
             $unique = array_values(array_unique($permissions));
 
             if ($unique !== []) {
                 RolePermission::query()->insert(array_map(
-                    static fn (string $permission): array => ['role' => $role, 'permission' => $permission],
+                    static fn (string $permission): array => ['role' => $canonicalRole, 'permission' => $permission],
                     $unique,
                 ));
             }
         });
     }
 
+    private function permissionsForRole(string $role): array
+    {
+        $role = OrganizationRole::canonical($role);
+
+        return RolePermission::query()->where('role', $role)->pluck('permission')->values()->all();
+    }
+
     private function definitions(): array
     {
         $definitions = array_map(
-            static fn (OrganizationRole $role): array => [
+            fn (OrganizationRole $role): array => [
                 'value' => $role->value,
                 'label' => $role->label(),
-                'permissions' => RolePermission::query()->where('role', $role->value)->pluck('permission')->values()->all(),
-                'description' => sprintf('%s default organization role.', $role->label()),
+                'permissions' => $this->permissionsForRole($role->value),
+                'description' => sprintf('%s default role.', $role->label()),
                 'is_system' => true,
             ],
             OrganizationRole::cases(),

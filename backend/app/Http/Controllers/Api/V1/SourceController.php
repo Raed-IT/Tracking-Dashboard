@@ -19,7 +19,7 @@ final class SourceController extends Controller
         ]);
 
         return SourceResource::collection(
-            DataSource::where('organization_id', $request->user()->currentOrganizationId())
+            DataSource::query()
                 ->orderBy('name')
                 ->paginate((int) ($validated['per_page'] ?? 25))
                 ->withQueryString(),
@@ -28,15 +28,11 @@ final class SourceController extends Controller
 
     public function show(DataSource $source): SourceResource
     {
-        abort_unless($source->organization_id === request()->user()->currentOrganizationId(), 404);
-
         return new SourceResource($source);
     }
 
     public function health(DataSource $source)
     {
-        abort_unless($source->organization_id === request()->user()->currentOrganizationId(), 404);
-
         return response()->json(['data' => (new SourceResource($source))->resolve()]);
     }
 
@@ -51,7 +47,7 @@ final class SourceController extends Controller
         $slug = Str::slug($data['name']);
         abort_if(DataSource::where('slug', $slug)->exists(), 422, 'A source with this name already exists.');
         $source = DataSource::create([
-            'uuid' => (string) Str::uuid(), 'organization_id' => $request->user()->currentOrganizationId(),
+            'uuid' => (string) Str::uuid(),
             'name' => $data['name'], 'slug' => $slug, 'type' => $data['type'], 'driver' => $data['driver'],
             'enabled' => true, 'status' => 'offline', 'configuration' => ['api_key' => $data['api_key'] ?? ''],
         ]);
@@ -60,7 +56,6 @@ final class SourceController extends Controller
 
     public function update(Request $request, DataSource $source): SourceResource
     {
-        abort_unless($source->organization_id === $request->user()->currentOrganizationId(), 404);
         $data = $request->validate(['enabled' => ['sometimes', 'boolean']]);
         $source->update($data);
         return new SourceResource($source->fresh());

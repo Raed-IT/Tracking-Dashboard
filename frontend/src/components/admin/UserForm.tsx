@@ -1,19 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Check, KeyRound, Mail, Shield, UserRound } from "lucide-react";
 
-import { createOrganizationUser, updateOrganizationUser } from "@/services/api";
-import type { OrganizationUser, Role } from "@/types/auth";
+import { createUser, fetchRoleDefinitions, updateUser } from "@/services/api";
+import type { Role, RoleDefinition, UserRecord } from "@/types/auth";
 import { Button } from "@/components/ui/Button";
 import { useNoticeStore } from "@/stores/notice-store";
-
-const roles: Array<{ value: Role; label: string; description: string }> = [
-  { value: "administrator", label: "Administrator", description: "Full access to users, sources, and operations." },
-  { value: "supervisor", label: "Supervisor", description: "Manage operations, alerts, geofences, and layouts." },
-  { value: "operator", label: "Operator", description: "Monitor tracks and respond to operational alerts." },
-  { value: "viewer", label: "Viewer", description: "Read-only situational awareness." },
-];
 
 type Draft = { name: string; email: string; password: string; role: Role };
 
@@ -22,8 +15,8 @@ export function UserForm({
   onSaved,
   onCancel,
 }: {
-  user?: OrganizationUser;
-  onSaved: (saved: OrganizationUser) => void;
+  user?: UserRecord;
+  onSaved: (saved: UserRecord) => void;
   onCancel: () => void;
 }) {
   const [draft, setDraft] = useState<Draft>({
@@ -34,8 +27,19 @@ export function UserForm({
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [roles, setRoles] = useState<RoleDefinition[]>([]);
   const showNotice = useNoticeStore((state) => state.show);
-  const selectedRole = roles.find((role) => role.value === draft.role) ?? roles[3];
+  const selectedRole = roles.find((role) => role.value === draft.role);
+
+  useEffect(() => {
+    void fetchRoleDefinitions().then(setRoles).catch(() => setError("Could not load roles."));
+  }, []);
+
+  useEffect(() => {
+    if (!user && roles.length > 0 && !roles.some((role) => role.value === draft.role)) {
+      setDraft((current) => ({ ...current, role: roles[0].value }));
+    }
+  }, [draft.role, roles, user]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -43,13 +47,13 @@ export function UserForm({
     setError("");
     try {
       const saved = user
-        ? await updateOrganizationUser(user.id, {
+        ? await updateUser(user.id, {
             name: draft.name,
             email: draft.email,
             role: draft.role,
             ...(draft.password ? { password: draft.password } : {}),
           })
-        : await createOrganizationUser(draft);
+        : await createUser(draft);
       showNotice("success", user ? "User details updated successfully." : "User created successfully.");
       onSaved(saved);
     } catch {
@@ -90,7 +94,7 @@ export function UserForm({
             </label>
           ))}
         </div>
-        <p className="mt-3 text-xs text-slate-500">Selected role: <strong className="text-slate-700 dark:text-slate-300">{selectedRole.label}</strong></p>
+        <p className="mt-3 text-xs text-slate-500">Selected role: <strong className="text-slate-700 dark:text-slate-300">{selectedRole?.label ?? "Loading..."}</strong></p>
       </fieldset>
 
       {error && <p className="rounded-xl border border-rose-400/20 bg-rose-400/5 p-3 text-sm text-rose-500">{error}</p>}

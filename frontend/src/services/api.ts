@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { DataSource, OperatorAlert, Track } from "@/types/tracking";
-import type { AuthenticatedUser, OrganizationUser, Permission, PermissionDefinition, Role, RoleDefinition } from "@/types/auth";
+import type { AuthenticatedUser, Permission, PermissionDefinition, Role, RoleDefinition, UserRecord } from "@/types/auth";
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost/api/v1",
   headers: { Accept: "application/json" },
@@ -118,16 +118,16 @@ export async function deleteRoleDefinition(role: Role): Promise<RoleDefinition[]
   );
   return data.data;
 }
-export async function fetchOrganizationUsers(
+export async function fetchUsers(
   filters: {
     search?: string;
     role?: Role;
     page?: number;
     perPage?: number;
   } = {},
-): Promise<OrganizationUser[]> {
-  const { data } = await api.get<{ data: OrganizationUser[] }>(
-    "/organization/users",
+): Promise<UserRecord[]> {
+  const { data } = await api.get<{ data: UserRecord[] }>(
+    "/users",
     {
       params: {
         search: filters.search,
@@ -139,46 +139,46 @@ export async function fetchOrganizationUsers(
   );
   return data.data;
 }
-export async function fetchOrganizationUsersPage(filters: {
+export async function fetchUsersPage(filters: {
   search?: string;
   role?: Role;
   page?: number;
   perPage?: number;
   sort?: "name" | "email" | "role" | "created_at";
   direction?: "asc" | "desc";
-} = {}): Promise<{ users: OrganizationUser[]; total: number; lastPage: number }> {
+} = {}): Promise<{ users: UserRecord[]; total: number; lastPage: number }> {
   const { data } = await api.get<{
-    data: OrganizationUser[];
+    data: UserRecord[];
     meta: { total: number; last_page: number };
-  }>("/organization/users", {
+  }>("/users", {
     params: { ...filters, per_page: filters.perPage ?? 25 },
   });
   return { users: data.data, total: data.meta.total, lastPage: data.meta.last_page };
 }
-export async function createOrganizationUser(input: {
+export async function createUser(input: {
   name: string;
   email: string;
   password: string;
   role: Role;
-}): Promise<OrganizationUser> {
-  const { data } = await api.post<{ data: OrganizationUser }>(
-    "/organization/users",
+}): Promise<UserRecord> {
+  const { data } = await api.post<{ data: UserRecord }>(
+    "/users",
     input,
   );
   return data.data;
 }
-export async function updateOrganizationUser(
+export async function updateUser(
   id: string,
   input: { name: string; email: string; password?: string; role: Role },
-): Promise<OrganizationUser> {
-  const { data } = await api.put<{ data: OrganizationUser }>(
-    `/organization/users/${id}`,
+): Promise<UserRecord> {
+  const { data } = await api.put<{ data: UserRecord }>(
+    `/users/${id}`,
     input,
   );
   return data.data;
 }
-export async function deleteOrganizationUser(id: string): Promise<void> {
-  await api.delete(`/organization/users/${id}`);
+export async function deleteUser(id: string): Promise<void> {
+  await api.delete(`/users/${id}`);
 }
 export async function fetchAlerts(): Promise<OperatorAlert[]> {
   const { data } = await api.get<{ data: OperatorAlert[] }>("/alerts", {

@@ -5,53 +5,43 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence;
 
 use App\Domain\Access\Contracts\OrganizationUserRepository;
-use App\Domain\Access\Enums\OrganizationRole;
-use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 final class EloquentOrganizationUserRepository implements OrganizationUserRepository
 {
-    public function paginate(Organization $organization, int $perPage = 25, ?string $search = null, ?string $role = null, string $sort = 'name', string $direction = 'asc'): LengthAwarePaginator
+    public function paginate(int $perPage = 25, ?string $search = null, ?string $role = null, string $sort = 'name', string $direction = 'asc'): LengthAwarePaginator
     {
-        return $organization->users()
+        return User::query()
             ->when($search, fn ($query) => $query->where(fn ($members) => $members
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")))
-            ->when($role, fn ($query) => $query->where('organization_user.role', $role))
-            ->when($sort === 'role', fn ($query) => $query->orderBy('organization_user.role', $direction))
+            ->when($role, fn ($query) => $query->where('role', $role))
+            ->when($sort === 'role', fn ($query) => $query->orderBy('role', $direction))
             ->when($sort !== 'role', fn ($query) => $query->orderBy($sort, $direction))
             ->paginate($perPage)
             ->withQueryString();
     }
 
-    public function findMember(Organization $organization, User $user): User
+    public function findMember(User $user): User
     {
-        return $organization->users()->whereKey($user->id)->firstOrFail();
+        return $user->exists ? $user : User::query()->findOrFail($user->getKey());
     }
 
-    public function create(Organization $organization, array $attributes): User
+    public function create(array $attributes): User
     {
-        return DB::transaction(function () use ($organization, $attributes): User {
-            $user = User::create(['name' => $attributes['name'], 'email' => $attributes['email'], 'password' => $attributes['password']]);
-            $organization->users()->attach($user, ['role' => $attributes['role']]);
-
-            return $this->findMember($organization, $user);
+        return DB::transaction(function () use ($attributes): User {
+            return User::create(['name' => $attributes['name'], 'email' => $attributes['email'], 'password' => $attributes['password'], 'role' => $attributes['role']]);
         });
     }
 
  public function update(
-    Organization $organization,
     User $user,
     array $attributes
 ): User {
-    return DB::transaction(function () use ($organization, $user, $attributes): User {
-
-        // تأكد أن المستخدم عضو فعلاً في المنظمة
-        $member = $organization->users()
-            ->whereKey($user->id)
-            ->firstOrFail();
+    return DB::transaction(function () use ($user, $attributes): User {
+        $member = $user;
 
         $userData = [];
 
@@ -74,31 +64,17 @@ final class EloquentOrganizationUserRepository implements OrganizationUserReposi
         if (array_key_exists('role', $attributes)) {
             $role = $attributes['role'];
 
-            if ($role instanceof OrganizationRole) {
-                $role = $role->value;
-            }
-
-            $organization->users()->updateExistingPivot(
-                $member->id,
-                ['role' => $role]
-            );
+            $member->role = $role;
+            $member->save();
         }
 
         return $member->fresh();
     });
 }
-    public function remove(Organization $organization, User $user): void
+    public function remove(User $user): void
     {
-        DB::transaction(function () use ($organization, $user): void {
-            $organization->users()->detach($user);
-            if (! $user->organizations()->exists()) {
-                $user->delete();
-            }
+        DB::transaction(function () use ($user): void {
+            $user->delete();
         });
-    }
-
-    public function administratorCount(Organization $organization): int
-    {
-        return $organization->users()->wherePivot('role', OrganizationRole::Administrator->value)->count();
     }
 }

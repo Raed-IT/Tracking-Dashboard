@@ -13,11 +13,6 @@ return new class extends Migration
 
             $table->uuid('uuid')->unique();
 
-            $table->foreignId('organization_id')
-                ->nullable()
-                ->constrained()
-                ->cascadeOnDelete();
-
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained()

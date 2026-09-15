@@ -14,7 +14,7 @@ final class TrackController extends Controller
     public function index(TrackIndexRequest $r)
     {
 
-        $q = Track::query()->where('organization_id', $r->user()->currentOrganizationId());
+        $q = Track::query();
             // ->where('last_seen_at', '>=', now()->subMinutes(100));
         foreach (['type', 'classification', 'status'] as $f) {
             if ($r->filled($f)) {
@@ -37,15 +37,11 @@ final class TrackController extends Controller
 
     public function show(Track $track): TrackResource
     {
-        abort_unless($track->organization_id === request()->user()->currentOrganizationId(), 404);
-
         return new TrackResource($track);
     }
 
     public function history(Track $track)
     {
-        abort_unless($track->organization_id === request()->user()->currentOrganizationId(), 404);
-
         return response()->json(['data' => $track->observations()->orderBy('observed_at')->whereBetween('observed_at', [request('from', now()->subDay()), request('to', now())])->limit(10000)->get(['uuid', 'observed_at', 'latitude', 'longitude', 'altitude', 'speed', 'heading', 'source_id'])]);
     }
 }

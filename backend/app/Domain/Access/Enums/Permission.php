@@ -68,7 +68,7 @@ enum Permission: string
             self::GeofencesManage => 'Create and maintain geofences.',
             self::DashboardView => 'Open the operations dashboard.',
             self::DashboardManage => 'Customize dashboard layouts and widgets.',
-            self::UsersManage => 'Invite members and assign organization roles.',
+            self::UsersManage => 'Create users and assign access roles.',
         };
     }
 

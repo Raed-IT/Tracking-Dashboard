@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace App\Domain\Access\Contracts;
 
-use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface OrganizationUserRepository
 {
-    public function paginate(Organization $organization, int $perPage = 25, ?string $search = null, ?string $role = null, string $sort = 'name', string $direction = 'asc'): LengthAwarePaginator;
+    public function paginate(int $perPage = 25, ?string $search = null, ?string $role = null, string $sort = 'name', string $direction = 'asc'): LengthAwarePaginator;
 
-    public function findMember(Organization $organization, User $user): User;
+    public function findMember(User $user): User;
 
-    public function create(Organization $organization, array $attributes): User;
+    public function create(array $attributes): User;
 
-    public function update(Organization $organization, User $user, array $attributes): User;
+    public function update(User $user, array $attributes): User;
 
-    public function remove(Organization $organization, User $user): void;
-
-    public function administratorCount(Organization $organization): int;
+    public function remove(User $user): void;
 }

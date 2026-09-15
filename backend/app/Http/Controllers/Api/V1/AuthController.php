@@ -23,7 +23,6 @@ final class AuthController extends Controller
             throw ValidationException::withMessages(['email' => ['Invalid credentials.']]);
         }
 
-        $u->load('organizations');
         $u->tokens()->where('name', 'dashboard')->delete();
 
         return response()->json([
@@ -42,6 +41,6 @@ final class AuthController extends Controller
 
     public function user(Request $r)
     {
-        return new AuthenticatedUserResource($r->user()->load('organizations'));
+        return new AuthenticatedUserResource($r->user());
     }
 }

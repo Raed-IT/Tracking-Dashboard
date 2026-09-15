@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Domain\Access\Enums\OrganizationRole;
 use App\Models\Role;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -22,10 +21,7 @@ final class UpdateOrganizationUserRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('user'))],
             'password' => ['nullable', 'string', 'min:10', 'max:255'],
-            'role' => ['sometimes', 'required', 'string', 'max:255', Rule::in(array_merge(
-                array_map(static fn (OrganizationRole $role): string => $role->value, OrganizationRole::cases()),
-                Role::allowedValues(),
-            ))],
+            'role' => ['sometimes', 'required', 'string', 'max:255', Rule::in(Role::allowedValues())],
         ];
     }
 }

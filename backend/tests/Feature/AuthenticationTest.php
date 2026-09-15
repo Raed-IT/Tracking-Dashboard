@@ -30,6 +30,19 @@ final class AuthenticationTest extends TestCase
         $this->withToken($token)->getJson('/api/v1/auth/user')->assertUnauthorized();
     }
 
+    public function test_superadmin_user_has_administrator_permissions(): void
+    {
+        [$user] = $this->member('superadmin');
+
+        $login = $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'secret-password']);
+
+        $login->assertOk()
+            ->assertJsonPath('user.role', 'superadmin')
+            ->assertJsonPath('user.permissions.0', 'tracks.view')
+            ->assertJsonPath('user.permissions.1', 'sources.view')
+            ->assertJsonFragment(['users.manage']);
+    }
+
     public function test_invalid_credentials_are_rejected(): void
     {
         [$user] = $this->member('viewer');
