@@ -18,6 +18,8 @@ Route::get('/fr24', function (Request $request) {
         'message' => 'FetchFlightradar24Aircraft dispatched.',
     ]);
 });
+
+Route::match(['get', 'post'], '/testalert', [AlertController::class, 'test']);
  
 Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login']);

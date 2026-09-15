@@ -22,6 +22,24 @@ final class AlertController extends Controller
         return AlertResource::collection($this->alerts->paginate($validated['state'] ?? 'active', (int) ($validated['per_page'] ?? 50)));
     }
 
+    public function test(Request $request): AlertResource
+    {
+        $validated = $request->validate([
+            'severity' => 'nullable|in:info,low,medium,high,critical',
+            'title' => 'nullable|string|max:255',
+            'message' => 'nullable|string|max:5000',
+        ]);
+
+        $alert = Alert::create([
+            'severity' => $validated['severity'] ?? 'high',
+            'state' => 'active',
+            'title' => $validated['title'] ?? 'Test alert',
+            'message' => $validated['message'] ?? 'This is a realtime test alert.',
+        ]);
+
+        return new AlertResource($alert);
+    }
+
     public function acknowledge(Request $request, Alert $alert): AlertResource
     {
         return new AlertResource($this->alerts->acknowledge($alert, $request->user()));
