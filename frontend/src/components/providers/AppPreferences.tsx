@@ -46,7 +46,7 @@ function applyPreferences(language: Language, theme: Theme) {
 export function AppPreferences({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
   const [theme, setThemeState] = useState<Theme>("dark");
-  const [alertVolume, setAlertVolumeState] = useState(2.5);
+  const [alertVolume, setAlertVolumeState] = useState(1);
 
   useEffect(() => {
     const savedLanguage = window.localStorage.getItem(

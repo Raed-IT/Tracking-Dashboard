@@ -6,7 +6,6 @@ import type { AlertSeverity, OperatorAlert } from "@/types/tracking";
 declare global {
     interface Window {
         Pusher: typeof Pusher;
-        webkitAudioContext?: typeof AudioContext;
     }
 }
 
@@ -27,33 +26,41 @@ export type RealtimeAlert = {
     created_at: string | null;
 };
 
-let alertAudioContext: AudioContext | undefined;
+let alertAudio: HTMLAudioElement | undefined;
 
-function getAlertAudioContext(): AudioContext | undefined {
+function getAlertAudio(): HTMLAudioElement | undefined {
     if (typeof window === "undefined") {
         return undefined;
     }
 
-    const AudioContextConstructor = window.AudioContext ?? window.webkitAudioContext;
-    if (!AudioContextConstructor) {
-        return undefined;
+    if (!alertAudio) {
+        alertAudio = new Audio("/sounds/alert.mp3");
+        alertAudio.preload = "auto";
     }
 
-    alertAudioContext ??= new AudioContextConstructor();
-    return alertAudioContext;
+    return alertAudio;
 }
 
 export async function unlockAlertSound(): Promise<boolean> {
-    const context = getAlertAudioContext();
-    if (!context) {
+    const audio = getAlertAudio();
+    if (!audio) {
         return false;
     }
 
-    if (context.state === "suspended") {
-        await context.resume();
+    if (!audio.paused) {
+        return true;
     }
 
-    return context.state === "running";
+    const wasMuted = audio.muted;
+    audio.muted = true;
+    try {
+        await audio.play();
+        audio.pause();
+        audio.currentTime = 0;
+        return true;
+    } finally {
+        audio.muted = wasMuted;
+    }
 }
 
 export function playAlertSound(volume: number): void {
@@ -61,8 +68,8 @@ export function playAlertSound(volume: number): void {
         return;
     }
 
-    const context = getAlertAudioContext();
-    if (!context) {
+    const audio = getAlertAudio();
+    if (!audio) {
         return;
     }
 
@@ -71,19 +78,11 @@ export function playAlertSound(volume: number): void {
             return;
         }
 
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        const now = context.currentTime;
-
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(740, now);
-        oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.16);
-        gain.gain.setValueAtTime(volume * 0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-        oscillator.connect(gain);
-        gain.connect(context.destination);
-        oscillator.start(now);
-        oscillator.stop(now + 0.16);
+        audio.volume = Math.min(1, Math.max(0, volume));
+        audio.currentTime = 0;
+        void audio.play().catch((error: unknown) => {
+            console.warn("Alert sound could not play:", error);
+        });
     }).catch((error: unknown) => {
         console.warn("Alert sound could not play until the browser allows audio:", error);
     });
