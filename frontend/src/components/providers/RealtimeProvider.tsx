@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 
-import { connectTracking, playAlertSound } from "@/services/realtime";
+import { connectTracking, playAlertSound, unlockAlertSound } from "@/services/realtime";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useRealtimeAlertStore } from "@/stores/realtime-alert-store";
 import { useNoticeStore } from "@/stores/notice-store";
@@ -13,6 +13,30 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const addAlert = useRealtimeAlertStore((state) => state.add);
   const showNotice = useNoticeStore((state) => state.show);
   const alertVolume = useAppPreferences().alertVolume;
+
+  useEffect(() => {
+    const unlock = () => {
+      void unlockAlertSound().then((unlocked) => {
+        if (unlocked) {
+          window.removeEventListener("pointerdown", unlock);
+          window.removeEventListener("keydown", unlock);
+          window.removeEventListener("touchstart", unlock);
+        }
+      }).catch((error: unknown) => {
+        console.warn("Alert sound could not be enabled:", error);
+      });
+    };
+
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    window.addEventListener("touchstart", unlock);
+
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
 
   useEffect(() => {
     const disconnect = connectTracking({

@@ -5,6 +5,7 @@ import type { AlertSeverity, OperatorAlert } from "@/types/tracking";
 declare global {
     interface Window {
         Pusher: typeof Pusher;
+        webkitAudioContext?: typeof AudioContext;
     }
 }
 
@@ -27,14 +28,48 @@ export type RealtimeAlert = {
 
 let alertAudioContext: AudioContext | undefined;
 
+function getAlertAudioContext(): AudioContext | undefined {
+    if (typeof window === "undefined") {
+        return undefined;
+    }
+
+    const AudioContextConstructor = window.AudioContext ?? window.webkitAudioContext;
+    if (!AudioContextConstructor) {
+        return undefined;
+    }
+
+    alertAudioContext ??= new AudioContextConstructor();
+    return alertAudioContext;
+}
+
+export async function unlockAlertSound(): Promise<boolean> {
+    const context = getAlertAudioContext();
+    if (!context) {
+        return false;
+    }
+
+    if (context.state === "suspended") {
+        await context.resume();
+    }
+
+    return context.state === "running";
+}
+
 export function playAlertSound(volume: number): void {
-    if (volume <= 0 || typeof window === "undefined" || !window.AudioContext) {
+    if (volume <= 0) {
         return;
     }
 
-    alertAudioContext ??= new window.AudioContext();
-    const context = alertAudioContext;
-    void context.resume().then(() => {
+    const context = getAlertAudioContext();
+    if (!context) {
+        return;
+    }
+
+    void unlockAlertSound().then((unlocked) => {
+        if (!unlocked) {
+            return;
+        }
+
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         const now = context.currentTime;
