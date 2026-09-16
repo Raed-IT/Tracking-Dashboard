@@ -20,6 +20,30 @@ export function Dialog({ open, onClose, title, description, children }: { open: 
     </section>
   </div>;
 }
+export function ConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  description,
+  confirmLabel = "Delete",
+  busy = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  busy?: boolean;
+}) {
+  return <Dialog open={open} onClose={busy ? () => undefined : onClose} title={title} description={description}>
+    <div className="flex justify-end gap-2">
+      <Button type="button" onClick={onClose} disabled={busy}>Cancel</Button>
+      <Button type="button" variant="danger" onClick={onConfirm} disabled={busy}>{busy ? "Deleting..." : confirmLabel}</Button>
+    </div>
+  </Dialog>;
+}
 export function DetailDrawer({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   useEscape(open, onClose); if (!open) return null;
   return <div className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>

@@ -1,7 +1,8 @@
+
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 import type { AlertSeverity, OperatorAlert } from "@/types/tracking";
-
+ 
 declare global {
     interface Window {
         Pusher: typeof Pusher;
@@ -179,6 +180,7 @@ export function connectTracking(
 
            const alertsChannel = echo.channel("alerts");
            alertsChannel.listen(".alert.created", (data: { alert: RealtimeAlert }) => {
+            console.log("Received alert:", data.alert);
                callbacks.onAlert?.(data);
            });
 

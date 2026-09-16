@@ -16,6 +16,7 @@ import {
 import type { Permission, PermissionDefinition, RoleDefinition } from "@/types/auth";
 import { useNoticeStore } from "@/stores/notice-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { ConfirmDialog } from "@/components/ui/Overlay";
 
 type Draft = {
   name: string;
@@ -35,6 +36,7 @@ export default function RolesPage() {
   const [selectedRole, setSelectedRole] = useState<RoleDefinition | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const showNotice = useNoticeStore((state) => state.show);
   const currentUser = useAuthStore((state) => state.user);
   const canDeleteRoles = currentUser?.role === "superadmin";
@@ -160,10 +162,6 @@ export default function RolesPage() {
       return;
     }
 
-    if (!window.confirm(`Delete the ${selectedRole.label} role?`)) {
-      return;
-    }
-
     setBusy(true);
     try {
       const nextRoles = await deleteRoleDefinition(selectedRole.value);
@@ -175,6 +173,7 @@ export default function RolesPage() {
         setSelectedRole(null);
         setDraft(emptyDraft);
       }
+      setDeleteOpen(false);
       showNotice("success", "Role deleted.");
     } catch {
       showNotice("error", "Could not delete this role.");
@@ -232,7 +231,7 @@ export default function RolesPage() {
                     <h2 className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">{selectedRole ? selectedRole.label : "New access role"}</h2>
                   </div>
                   {canDeleteRoles && selectedRole && !selectedRole.is_system ? (
-                    <Button variant="danger" size="sm" onClick={deleteCurrentRole} disabled={!selectedRole || busy}>
+                    <Button variant="danger" size="sm" onClick={() => setDeleteOpen(true)} disabled={!selectedRole || busy}>
                       <Trash2 size={14} />Delete
                     </Button>
                   ) : null}
@@ -305,6 +304,7 @@ export default function RolesPage() {
               </section>
             </div>
           </main>
+          <ConfirmDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={() => void deleteCurrentRole()} title="Delete role?" description={`This will permanently remove the ${selectedRole?.label ?? "selected"} role and its permissions.`} busy={busy} />
         </PermissionGate>
       </OperationsDrawer>
     </AuthGate>
