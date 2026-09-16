@@ -4,6 +4,7 @@ export const translations = {
   en: {
     common: {
       overview: "Overview",
+      role: "Role",
       liveTracks: "Live Tracks",
       dataSources: "Data Sources",
       alerts: "Alerts",
@@ -98,6 +99,7 @@ export const translations = {
   ar: {
     common: {
       overview: "نظرة عامة",
+      role: "الدور",
       liveTracks: "التتبع المباشر",
       dataSources: "مصادر البيانات",
       alerts: "التنبيهات",

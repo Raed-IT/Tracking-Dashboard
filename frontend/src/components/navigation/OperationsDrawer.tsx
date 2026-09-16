@@ -70,12 +70,7 @@ const nav = [
     icon: Users,
     permission: "users.manage" as const,
   },
-  {
-    href: "/admin/roles",
-    label: "Roles",
-    icon: ShieldCheck,
-    permission: "users.manage" as const,
-  },
+ 
   {
     href: "/settings",
     label: "Settings",
@@ -182,8 +177,7 @@ export function OperationsDrawer({
   const visibleNav = nav.filter(
     (item) => !item.permission || can(item.permission)
   );
-
-  return (
+   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 selection:bg-cyan-300 selection:text-slate-950 dark:bg-slate-950 dark:text-slate-100">
       <NoticeHost />
       {/* Mobile overlay */}
