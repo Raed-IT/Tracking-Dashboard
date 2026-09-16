@@ -1,8 +1,24 @@
 import axios from "axios";
 import type { DataSource, OperatorAlert, Track } from "@/types/tracking";
 import type { AuthenticatedUser, Permission, PermissionDefinition, Role, RoleDefinition, UserRecord } from "@/types/auth";
+
+function resolveApiBaseUrl(): string {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost/api/v1";
+
+  if (typeof window === "undefined") {
+    return configuredUrl;
+  }
+
+  const url = new URL(configuredUrl, window.location.origin);
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    url.hostname = window.location.hostname;
+  }
+  return url.toString().replace(/\/$/, "");
+}
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost/api/v1",
+  baseURL: resolveApiBaseUrl(),
+  timeout: 10000,
   headers: { Accept: "application/json" },
 });
 api.interceptors.request.use((c) => {

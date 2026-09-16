@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Domain\Access\Enums\OrganizationRole;
+use App\Domain\Alerts\Events\AlertCreated;
+use App\Domain\Alerts\Models\Alert;
 use App\Models\RolePermission;
 use Database\Factories\UserFactory;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -11,6 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Str;
 class User extends Authenticatable
 {    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasUuids, Notifiable;
@@ -33,7 +36,20 @@ class User extends Authenticatable
     {
         return ['uuid'];
     }
+protected static function booted(): void
+{
+    static::created(static function ($user): void {
+        $alert = Alert::create([
+            'uuid' => (string) Str::uuid(),
+            'severity' => 'info',
+            'state' => 'new',
+            'title' => 'New User Created',
+            'message' => 'A new user has been created',
+        ]);
 
+        event(new AlertCreated($alert));
+    });
+}
     public function getRouteKeyName(): string
     {
         return 'uuid';
